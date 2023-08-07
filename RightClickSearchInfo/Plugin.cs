@@ -1,24 +1,41 @@
-﻿using Dalamud.Game.Command;
+﻿using System.IO;
+
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
 using Dalamud.Interface.Windowing;
-using SamplePlugin.Windows;
+using Dalamud.ContextMenu;
+using Dalamud.Game.Gui;
+using Dalamud.Game.Command;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects;
 
-namespace SamplePlugin
+using RightClickSearchInfo.Windows;
+using RightClickSearchInfo.ContextMenus;
+
+namespace RightClickSearchInfo
 {
     public sealed class Plugin : IDalamudPlugin
     {
-        public string Name => "Sample Plugin";
-        private const string CommandName = "/pmycommand";
+        [PluginService]
+        [RequiredVersion("1.0")]
+        public static ClientState ClientState { get; private set; } = null!;
+
+        [PluginService]
+        [RequiredVersion("1.0")]
+        public static ChatGui ChatGui { get; private set; } = null!;
+
+        public string Name => "Right Click Search info";
+        private const string CommandName = "/rcsi";
 
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
-        public Configuration Configuration { get; init; }
-        public WindowSystem WindowSystem = new("SamplePlugin");
 
-        private ConfigWindow ConfigWindow { get; init; }
+        public WindowSystem WindowSystem = new("RightClickSearchInfo");
+        public DalamudContextMenu ContextMenu = null!;
+
         private MainWindow MainWindow { get; init; }
+        private TargetContextMenu TargetContextMenu { get; init; }
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
@@ -27,34 +44,34 @@ namespace SamplePlugin
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
 
-            this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(this.PluginInterface);
-
-            // you might normally want to embed resources and load them from the manifest stream
+            // Goat resource
             var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
 
-            ConfigWindow = new ConfigWindow(this);
-            MainWindow = new MainWindow(this, goatImage);
-            
-            WindowSystem.AddWindow(ConfigWindow);
+            // Windows
+            MainWindow = new MainWindow(this, goatImage); 
             WindowSystem.AddWindow(MainWindow);
 
+            // Context Menu
+            this.ContextMenu = new DalamudContextMenu();
+            TargetContextMenu = new TargetContextMenu(this);
+
+            // CMD 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
-                HelpMessage = "A useful message to display in /xlhelp"
+                HelpMessage = "Usage instructions..."
             });
 
+            // Hooks
             this.PluginInterface.UiBuilder.Draw += DrawUI;
-            this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         }
 
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
             
-            ConfigWindow.Dispose();
             MainWindow.Dispose();
+            TargetContextMenu.Dispose();
             
             this.CommandManager.RemoveHandler(CommandName);
         }
@@ -68,11 +85,6 @@ namespace SamplePlugin
         private void DrawUI()
         {
             this.WindowSystem.Draw();
-        }
-
-        public void DrawConfigUI()
-        {
-            ConfigWindow.IsOpen = true;
         }
     }
 }

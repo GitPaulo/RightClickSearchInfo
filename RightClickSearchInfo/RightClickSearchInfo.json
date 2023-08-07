@@ -1,0 +1,13 @@
+{
+  "Author": "Paulo Santos",
+  "Name": "Right Click Search Info",
+  "Punchline": "Bloated ngl.",
+  "Description": "Does what it says it does.",
+  "InternalName": "RightClickSearchInfo",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "sample",
+    "plugin",
+    "goats"
+  ]
+}

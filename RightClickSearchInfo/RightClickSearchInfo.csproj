@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Authors></Authors>
     <Company></Company>
-    <Version>0.0.0.1</Version>
-    <Description>A sample plugin.</Description>
+    <Version>1</Version>
+    <Description>A dead simple plugin to right click search info.</Description>
     <Copyright></Copyright>
-    <PackageProjectUrl>https://github.com/goatcorp/SamplePlugin</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/goatcorp/RightClickSearchInfo</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -38,6 +38,10 @@
 
   <ItemGroup>
     <PackageReference Include="DalamudPackager" Version="2.1.10" />
+    <Reference Include="ImGui">
+      <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
@@ -67,5 +71,7 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-
+	<ItemGroup>
+		<PackageReference Include="Dalamud.ContextMenu" Version="1.2.3" />
+	</ItemGroup>
 </Project>
