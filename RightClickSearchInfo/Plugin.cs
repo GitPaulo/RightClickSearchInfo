@@ -9,9 +9,13 @@ using Dalamud.Game.Command;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects;
+using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Objects.Enums;
 
 using RightClickSearchInfo.Windows;
 using RightClickSearchInfo.ContextMenus;
+using RightClickSearchInfo.Services;
+using RightClickSearchInfo.Sound;
 
 namespace RightClickSearchInfo
 {
@@ -25,8 +29,11 @@ namespace RightClickSearchInfo
         [RequiredVersion("1.0")]
         public static ChatGui ChatGui { get; private set; } = null!;
 
+        public SearchCommandService SearchCommandService { get; set; } = null!;
+
         public string Name => "Right Click Search info";
-        private const string CommandName = "/rcsi";
+        private const string MainCommand = "/rcsi";
+        private const string MouseOverCommand = "/seamo";
 
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
@@ -37,29 +44,41 @@ namespace RightClickSearchInfo
         private MainWindow MainWindow { get; init; }
         private TargetContextMenu TargetContextMenu { get; init; }
 
+        private readonly TargetManager targetManager;
+
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] CommandManager commandManager)
+            [RequiredVersion("1.0")] CommandManager commandManager,
+            TargetManager targetManager) 
         {
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
+            this.targetManager = targetManager;
 
-            // Goat resource
+            // Resources
             var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
+            var notifPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "notif.mp3");
+
+            // Services
+            this.SearchCommandService = new SearchCommandService(this, notifPath);
 
             // Windows
-            MainWindow = new MainWindow(this, goatImage); 
+            MainWindow = new MainWindow(this, goatImage);
             WindowSystem.AddWindow(MainWindow);
 
             // Context Menu
             this.ContextMenu = new DalamudContextMenu();
             TargetContextMenu = new TargetContextMenu(this);
 
-            // CMD 
-            this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
+            // Commands
+            this.CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
             {
-                HelpMessage = "Usage instructions..."
+                HelpMessage = "Usage instructions."
+            });
+            this.CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnMouseOverCommand)
+            {
+                HelpMessage = "Search info command for mouse over target."
             });
 
             // Hooks
@@ -69,17 +88,27 @@ namespace RightClickSearchInfo
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
-            
+
             MainWindow.Dispose();
             TargetContextMenu.Dispose();
-            
-            this.CommandManager.RemoveHandler(CommandName);
+
+            this.CommandManager.RemoveHandler(MainCommand);
+            this.CommandManager.RemoveHandler(MouseOverCommand);
         }
 
-        private void OnCommand(string command, string args)
+        private void OnMainCommand(string command, string args)
         {
             // in response to the slash command, just display our main ui
             MainWindow.IsOpen = true;
+        }
+
+        private void OnMouseOverCommand(string command, string args)
+        {
+            GameObject? target = targetManager.MouseOverTarget;
+            if (target == null || target.ObjectKind != ObjectKind.Player) return;
+
+            string targetFullName = target.Name.ToString();
+            this.SearchCommandService.runSearch(targetFullName);
         }
 
         private void DrawUI()
@@ -88,3 +117,4 @@ namespace RightClickSearchInfo
         }
     }
 }
+

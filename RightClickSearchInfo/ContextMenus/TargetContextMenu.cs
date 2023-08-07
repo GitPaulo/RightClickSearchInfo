@@ -4,14 +4,12 @@ using Dalamud.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 
-using ImGuiNET;
-
 public class TargetContextMenu
 {
     private readonly Plugin plugin;
     private readonly GameObjectContextMenuItem addShowMenuItem;
 
-    private string targetName;
+    private string? targetFullName;
 
     public TargetContextMenu(Plugin plugin)
     {
@@ -19,7 +17,7 @@ public class TargetContextMenu
         this.plugin.ContextMenu.OnOpenGameObjectContextMenu += this.OpenGameObjectContextMenu;
         this.addShowMenuItem = new GameObjectContextMenuItem(
             new SeString(new TextPayload("View In Search")), this.OnOpenPlayerInfo);
-        this.targetName = "";
+        this.targetFullName = null;
     }
 
     public void Dispose()
@@ -60,17 +58,16 @@ public class TargetContextMenu
         if (!shouldShowMenu(args)) return;
 
         // save target name
-        this.targetName = args.Text!.ToString();
+        this.targetFullName = args.Text!.ToString();
 
+        // add item to context menu
         args.AddCustomItem(this.addShowMenuItem);
     }
 
     private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
     {
-        string[] targetNameSplit = this.targetName.Split(' ');
-        string searchCommandString = "/search forename \"" + targetNameSplit[0] + "\" surname \"" + targetNameSplit[1] + "\"";
-        Plugin.ChatGui.Print("Copied search command to clipboard:");
-        Plugin.ChatGui.Print(searchCommandString);
-        ImGui.SetClipboardText(searchCommandString);
+        if (this.targetFullName == null) return;
+
+        this.plugin.SearchCommandService.runSearch(this.targetFullName);
     }
 }

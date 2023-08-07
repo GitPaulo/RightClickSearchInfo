@@ -27,6 +27,13 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\Data\notif.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+
   <PropertyGroup>
     <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -73,5 +80,8 @@
   </ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Dalamud.ContextMenu" Version="1.2.3" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="NAudio" Version="2.1.0" />
 	</ItemGroup>
 </Project>
