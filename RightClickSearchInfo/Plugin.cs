@@ -128,7 +128,7 @@ public sealed class Plugin : IDalamudPlugin
         if (target == null || target.ObjectKind != ObjectKind.Player) return;
 
         var targetFullName = target.Name.ToString();
-        LodestoneService.OpenCharacterLodestone(targetFullName, target.OwnerId);
+        LodestoneService.OpenCharacterLodestone(targetFullName, 1); // TODO
     }
 
     private void DrawUI()
