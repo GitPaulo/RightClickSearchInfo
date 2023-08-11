@@ -2,61 +2,56 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
-
-using Dalamud.Utility;
 using Dalamud.Logging;
-
+using Dalamud.Utility;
 using NAudio.Wave;
 
 namespace RightClickSearchInfo.Sound;
 
 public static class SoundEngine
 {
-  public static void PlaySound(string path, float volume = 1.0f)
-  {
-    if (path.IsNullOrEmpty() || !File.Exists(path)) return;
-
-    if (Process.GetCurrentProcess().Id != ProcessUtils.GetForegroundProcessId()) return;
-
-    var soundDevice = -1;
-
-    Dalamud.Logging.PluginLog.Log("Attempting to play sound: " + path);
-
-    new Thread(() =>
+    public static void PlaySound(string path, float volume = 1.0f)
     {
-      WaveStream reader;
-      try
-      {
-        reader = new AudioFileReader(path);
-      }
-      catch (Exception e)
-      {
-        Dalamud.Logging.PluginLog.Error($"Could not play sound file: {e.Message}");
-        return;
-      }
+        if (path.IsNullOrEmpty() || !File.Exists(path)) return;
 
-      volume = Math.Max(0, Math.Min(volume, 1));
+        if (Process.GetCurrentProcess().Id != ProcessUtils.GetForegroundProcessId()) return;
 
-      using WaveChannel32 channel = new(reader)
-      {
-        Volume = 1 - (float)Math.Sqrt(1 - (volume * volume)),
-        PadWithZeroes = false,
-      };
+        var soundDevice = -1;
 
-      using (reader)
-      {
-        using var output = new WaveOutEvent
+        PluginLog.Log("Attempting to play sound: " + path);
+
+        new Thread(() =>
         {
-          DeviceNumber = soundDevice,
-        };
-        output.Init(channel);
-        output.Play();
+            WaveStream reader;
+            try
+            {
+                reader = new AudioFileReader(path);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error($"Could not play sound file: {e.Message}");
+                return;
+            }
 
-        while (output.PlaybackState == PlaybackState.Playing)
-        {
-          Thread.Sleep(500);
-        }
-      }
-    }).Start();
-  }
+            volume = Math.Max(0, Math.Min(volume, 1));
+
+            using WaveChannel32 channel = new(reader)
+            {
+                Volume = 1 - (float)Math.Sqrt(1 - (volume * volume)),
+                PadWithZeroes = false
+            };
+
+            using (reader)
+            {
+                using var output = new WaveOutEvent
+                {
+                    DeviceNumber = soundDevice
+                };
+                output.Init(channel);
+                output.Play();
+
+                while (output.PlaybackState == PlaybackState.Playing) Thread.Sleep(500);
+            }
+        }).Start();
+    }
 }

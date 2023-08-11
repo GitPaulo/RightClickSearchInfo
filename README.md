@@ -4,14 +4,12 @@ I don't see sharp.
 
 Dead simple plugin I just want to have this feature in my vidya gayme.
 
-**Note:** This only generates and copies the command needed to filter the Search Info list. I don't think Dalamud has the capability to programmatically call in-game chat commands or active in-game UIs as it's an out-of-spec feature. I might update this, later on, to forcibly do that.
-
-**Note2:** IDK what i'm doing.
-
 ## Usage
 
-1. Through target context menu `View in Search`
+This plugin will add two context menu items and two commands to open a player target in search or lodestone.
 
-![view in search](image.png)
+1. Through target context menu `View In Search` / `Open In Lodestone'`
 
-2. Through chat command w/ mouse over: `/seamo`
+![preview.png](preview.png)
+
+2. Through chat commands w/ mouse over: `/seamo` and `/lodmo`

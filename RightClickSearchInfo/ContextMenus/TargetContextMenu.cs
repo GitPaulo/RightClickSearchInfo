@@ -1,28 +1,31 @@
-namespace RightClickSearchInfo.ContextMenus;
-
 using Dalamud.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 
+namespace RightClickSearchInfo.ContextMenus;
+
 public class TargetContextMenu
 {
+    private readonly GameObjectContextMenuItem lodestoneItem;
     private readonly Plugin plugin;
-    private readonly GameObjectContextMenuItem addShowMenuItem;
+    private readonly GameObjectContextMenuItem searchItem;
 
     private string? targetFullName;
 
     public TargetContextMenu(Plugin plugin)
     {
         this.plugin = plugin;
-        this.plugin.ContextMenu.OnOpenGameObjectContextMenu += this.OpenGameObjectContextMenu;
-        this.addShowMenuItem = new GameObjectContextMenuItem(
-            new SeString(new TextPayload("View In Search")), this.OnOpenPlayerInfo);
-        this.targetFullName = null;
+        this.plugin.ContextMenu.OnOpenGameObjectContextMenu += OpenGameObjectContextMenu;
+        searchItem = new GameObjectContextMenuItem(
+            new SeString(new TextPayload("View In Search")), OnOpenPlayerInfo);
+        lodestoneItem = new GameObjectContextMenuItem(
+            new SeString(new TextPayload("Open In Lodestone")), OnOpenLodestone);
+        targetFullName = null;
     }
 
     public void Dispose()
     {
-        this.plugin.ContextMenu.OnOpenGameObjectContextMenu -= this.OpenGameObjectContextMenu;
+        plugin.ContextMenu.OnOpenGameObjectContextMenu -= OpenGameObjectContextMenu;
     }
 
     private static bool shouldShowMenu(BaseContextMenuArgs args)
@@ -58,16 +61,24 @@ public class TargetContextMenu
         if (!shouldShowMenu(args)) return;
 
         // save target name
-        this.targetFullName = args.Text!.ToString();
+        targetFullName = args.Text!.ToString();
 
         // add item to context menu
-        args.AddCustomItem(this.addShowMenuItem);
+        args.AddCustomItem(searchItem);
+        args.AddCustomItem(lodestoneItem);
     }
 
     private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
     {
-        if (this.targetFullName == null) return;
+        if (targetFullName == null) return;
 
-        this.plugin.SearchCommandService.runSearch(this.targetFullName);
+        plugin.SearchCommandService.GenerateToClipboard(targetFullName);
+    }
+
+    private void OnOpenLodestone(GameObjectContextMenuItemSelectedArgs args)
+    {
+        if (targetFullName == null) return;
+
+        plugin.LodestoneService.OpenCharacterLodestone(targetFullName, args.ObjectWorld);
     }
 }

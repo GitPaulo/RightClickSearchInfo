@@ -1,120 +1,149 @@
 ﻿using System.IO;
-
+using Dalamud.ContextMenu;
+using Dalamud.Data;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Objects;
+using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Interface.Windowing;
-using Dalamud.ContextMenu;
-using Dalamud.Game.Gui;
-using Dalamud.Game.Command;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.ClientState.Objects.Enums;
-
-using RightClickSearchInfo.Windows;
 using RightClickSearchInfo.ContextMenus;
 using RightClickSearchInfo.Services;
-using RightClickSearchInfo.Sound;
+using RightClickSearchInfo.Windows;
 
-namespace RightClickSearchInfo
+namespace RightClickSearchInfo;
+
+public sealed class Plugin : IDalamudPlugin
 {
-    public sealed class Plugin : IDalamudPlugin
+    private const string MainCommand = "/rcsi";
+    private const string MouseOverCommand = "/seamo";
+
+    public readonly Resources PluginResources;
+    private readonly TargetManager TargetManager;
+    public DalamudContextMenu ContextMenu = null!;
+
+
+    public WindowSystem WindowSystem = new("RightClickSearchInfo");
+
+    public Plugin(
+        [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
+        [RequiredVersion("1.0")] CommandManager commandManager,
+        [RequiredVersion("1.0")] TargetManager targetManager,
+        [RequiredVersion("1.0")] DataManager dataManager
+    )
     {
-        [PluginService]
-        [RequiredVersion("1.0")]
-        public static ClientState ClientState { get; private set; } = null!;
+        PluginInterface = pluginInterface;
+        CommandManager = commandManager;
+        TargetManager = targetManager;
+        DataManager = dataManager;
 
-        [PluginService]
-        [RequiredVersion("1.0")]
-        public static ChatGui ChatGui { get; private set; } = null!;
+        // Resources
+        var goatPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
+        var notifPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "notif.mp3");
+        PluginResources = new Resources(goatPath, notifPath);
 
-        public SearchCommandService SearchCommandService { get; set; } = null!;
+        // Services
+        SearchCommandService = new SearchCommandService(this);
+        LodestoneService = new LodestoneService(this);
 
-        public string Name => "Right Click Search info";
-        private const string MainCommand = "/rcsi";
-        private const string MouseOverCommand = "/seamo";
+        // Windows
+        MainWindow = new MainWindow(this);
+        WindowSystem.AddWindow(MainWindow);
 
-        private DalamudPluginInterface PluginInterface { get; init; }
-        private CommandManager CommandManager { get; init; }
+        // Context Menu
+        ContextMenu = new DalamudContextMenu();
+        TargetContextMenu = new TargetContextMenu(this);
 
-        public WindowSystem WindowSystem = new("RightClickSearchInfo");
-        public DalamudContextMenu ContextMenu = null!;
-
-        private MainWindow MainWindow { get; init; }
-        private TargetContextMenu TargetContextMenu { get; init; }
-
-        private readonly TargetManager targetManager;
-
-        public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] CommandManager commandManager,
-            TargetManager targetManager) 
+        // Commands
+        CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
         {
-            this.PluginInterface = pluginInterface;
-            this.CommandManager = commandManager;
-            this.targetManager = targetManager;
-
-            // Resources
-            var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-            var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
-            var notifPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "notif.mp3");
-
-            // Services
-            this.SearchCommandService = new SearchCommandService(this, notifPath);
-
-            // Windows
-            MainWindow = new MainWindow(this, goatImage);
-            WindowSystem.AddWindow(MainWindow);
-
-            // Context Menu
-            this.ContextMenu = new DalamudContextMenu();
-            TargetContextMenu = new TargetContextMenu(this);
-
-            // Commands
-            this.CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
-            {
-                HelpMessage = "Usage instructions."
-            });
-            this.CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnMouseOverCommand)
-            {
-                HelpMessage = "Search info command for mouse over target."
-            });
-
-            // Hooks
-            this.PluginInterface.UiBuilder.Draw += DrawUI;
-        }
-
-        public void Dispose()
+            HelpMessage = "Usage instructions."
+        });
+        CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnSearchOverCommand)
         {
-            this.WindowSystem.RemoveAllWindows();
-
-            MainWindow.Dispose();
-            TargetContextMenu.Dispose();
-
-            this.CommandManager.RemoveHandler(MainCommand);
-            this.CommandManager.RemoveHandler(MouseOverCommand);
-        }
-
-        private void OnMainCommand(string command, string args)
+            HelpMessage = "Search info command for mouse over target."
+        });
+        CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnLodestoneOverCommand)
         {
-            // in response to the slash command, just display our main ui
-            MainWindow.IsOpen = true;
-        }
+            HelpMessage = "Lodestone command for mouse over target."
+        });
 
-        private void OnMouseOverCommand(string command, string args)
+        // Hooks
+        PluginInterface.UiBuilder.Draw += DrawUI;
+    }
+
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static ClientState ClientState { get; private set; } = null!;
+
+    [PluginService]
+    [RequiredVersion("1.0")]
+    public static ChatGui ChatGui { get; private set; } = null!;
+
+    public SearchCommandService SearchCommandService { get; set; } = null!;
+    public LodestoneService LodestoneService { get; set; } = null!;
+
+    public DalamudPluginInterface PluginInterface { get; init; }
+    private CommandManager CommandManager { get; init; }
+    public DataManager DataManager { get; init; }
+
+    private MainWindow MainWindow { get; init; }
+    private TargetContextMenu TargetContextMenu { get; init; }
+
+    public string Name => "Right Click Search info";
+
+    public void Dispose()
+    {
+        WindowSystem.RemoveAllWindows();
+
+        MainWindow.Dispose();
+        TargetContextMenu.Dispose();
+
+        CommandManager.RemoveHandler(MainCommand);
+        CommandManager.RemoveHandler(MouseOverCommand);
+    }
+
+    private void OnMainCommand(string command, string args)
+    {
+        // in response to the slash command, just display our main ui
+        MainWindow.IsOpen = true;
+    }
+
+    private void OnSearchOverCommand(string command, string args)
+    {
+        var target = TargetManager.MouseOverTarget;
+        if (target == null || target.ObjectKind != ObjectKind.Player) return;
+
+        var targetFullName = target.Name.ToString();
+        SearchCommandService.GenerateToClipboard(targetFullName);
+    }
+
+    private void OnLodestoneOverCommand(string command, string args)
+    {
+        var target = TargetManager.MouseOverTarget;
+        if (target == null || target.ObjectKind != ObjectKind.Player) return;
+
+        var targetFullName = target.Name.ToString();
+        SearchCommandService.GenerateToClipboard(targetFullName);
+    }
+
+    private void DrawUI()
+    {
+        WindowSystem.Draw();
+    }
+
+
+    public struct Resources
+    {
+        public string GoatPath { get; }
+        public string NotificationPath { get; }
+
+        public Resources(string goatPath, string notificationPath)
         {
-            GameObject? target = targetManager.MouseOverTarget;
-            if (target == null || target.ObjectKind != ObjectKind.Player) return;
-
-            string targetFullName = target.Name.ToString();
-            this.SearchCommandService.runSearch(targetFullName);
-        }
-
-        private void DrawUI()
-        {
-            this.WindowSystem.Draw();
+            GoatPath = goatPath;
+            NotificationPath = notificationPath;
         }
     }
 }
-
