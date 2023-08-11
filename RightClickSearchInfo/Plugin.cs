@@ -18,7 +18,8 @@ namespace RightClickSearchInfo;
 public sealed class Plugin : IDalamudPlugin
 {
     private const string MainCommand = "/rcsi";
-    private const string MouseOverCommand = "/seamo";
+    private const string SearchOverCommand = "/seamo";
+    private const string LodestoneOverCommand = "/lodmo";
 
     public readonly Resources PluginResources;
     private readonly TargetManager TargetManager;
@@ -61,11 +62,11 @@ public sealed class Plugin : IDalamudPlugin
         {
             HelpMessage = "Usage instructions."
         });
-        CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnSearchOverCommand)
+        CommandManager.AddHandler(SearchOverCommand, new CommandInfo(OnSearchOverCommand)
         {
             HelpMessage = "Search info command for mouse over target."
         });
-        CommandManager.AddHandler(MouseOverCommand, new CommandInfo(OnLodestoneOverCommand)
+        CommandManager.AddHandler(LodestoneOverCommand, new CommandInfo(OnLodestoneOverCommand)
         {
             HelpMessage = "Lodestone command for mouse over target."
         });
@@ -102,7 +103,8 @@ public sealed class Plugin : IDalamudPlugin
         TargetContextMenu.Dispose();
 
         CommandManager.RemoveHandler(MainCommand);
-        CommandManager.RemoveHandler(MouseOverCommand);
+        CommandManager.RemoveHandler(SearchOverCommand);
+        CommandManager.RemoveHandler(LodestoneOverCommand);
     }
 
     private void OnMainCommand(string command, string args)
@@ -126,7 +128,7 @@ public sealed class Plugin : IDalamudPlugin
         if (target == null || target.ObjectKind != ObjectKind.Player) return;
 
         var targetFullName = target.Name.ToString();
-        SearchCommandService.GenerateToClipboard(targetFullName);
+        LodestoneService.OpenCharacterLodestone(targetFullName, target.OwnerId);
     }
 
     private void DrawUI()
