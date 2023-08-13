@@ -132,7 +132,12 @@ public sealed class Plugin : IDalamudPlugin
         if (target == null || target.ObjectKind != ObjectKind.Player) return;
 
         var targetFullName = target.Name.ToString();
-        LodestoneService.OpenCharacterLodestone(targetFullName, 1); // TODO
+        var worldId = ClientState?.LocalPlayer?.CurrentWorld.Id;
+
+        if (worldId != null)
+        {
+            LodestoneService.OpenCharacterLodestone(targetFullName, worldId.Value);
+        }
     }
 
     private void DrawUI()
