@@ -46,7 +46,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginResources = new Resources(goatPath, notifPath);
 
         // Services
-        SearchCommandService = new SearchCommandService(this);
+        ChatAutomationService = new ChatAutomationService(this);
         LodestoneService = new LodestoneService(this);
 
         // Windows
@@ -83,7 +83,7 @@ public sealed class Plugin : IDalamudPlugin
     [RequiredVersion("1.0")]
     public static ChatGui ChatGui { get; private set; } = null!;
 
-    public SearchCommandService SearchCommandService { get; set; } = null!;
+    public ChatAutomationService ChatAutomationService { get; set; } = null!;
     public LodestoneService LodestoneService { get; set; } = null!;
 
     public DalamudPluginInterface PluginInterface { get; init; }
@@ -119,7 +119,11 @@ public sealed class Plugin : IDalamudPlugin
         if (target == null || target.ObjectKind != ObjectKind.Player) return;
 
         var targetFullName = target.Name.ToString();
-        SearchCommandService.GenerateToClipboard(targetFullName);
+        var targetNameSplit = targetFullName.Split(' ');
+        var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
+
+        #pragma warning disable CS4014 
+        ChatAutomationService.SendMessage(searchCommand);
     }
 
     private void OnLodestoneOverCommand(string command, string args)

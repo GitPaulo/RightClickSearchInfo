@@ -82,6 +82,7 @@
         <PackageReference Include="Dalamud.ContextMenu" Version="1.2.3"/>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="InputSimulatorPlus" Version="1.0.7"/>
         <PackageReference Include="NAudio" Version="2.1.0"/>
     </ItemGroup>
 </Project>

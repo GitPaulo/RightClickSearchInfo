@@ -13,3 +13,5 @@ This plugin will add two context menu items and two commands to open a player ta
 ![preview.png](preview.png)
 
 2. Through chat commands w/ mouse over: `/seamo` and `/lodmo`
+
+> **Note:** This plugin uses input automation to interact with FFXIV's chat

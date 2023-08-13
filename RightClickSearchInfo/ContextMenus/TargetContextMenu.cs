@@ -72,7 +72,11 @@ public class TargetContextMenu
     {
         if (targetFullName == null) return;
 
-        plugin.SearchCommandService.GenerateToClipboard(targetFullName);
+        var targetNameSplit = targetFullName.Split(' ');
+        var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
+
+        #pragma warning disable CS4014
+        plugin.ChatAutomationService.SendMessage(searchCommand);
     }
 
     private void OnOpenLodestone(GameObjectContextMenuItemSelectedArgs args)

@@ -8,8 +8,8 @@ namespace RightClickSearchInfo.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private readonly TextureWrap GoatImage;
-    private readonly Plugin Plugin;
+    private readonly TextureWrap goatImage;
+    private readonly Plugin plugin;
 
     public MainWindow(Plugin plugin) : base(
         "RCSI", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
@@ -20,13 +20,13 @@ public class MainWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        Plugin = plugin;
-        GoatImage = plugin.PluginInterface.UiBuilder.LoadImage(Plugin.PluginResources.GoatPath);
+        this.plugin = plugin;
+        goatImage = plugin.PluginInterface.UiBuilder.LoadImage(this.plugin.PluginResources.GoatPath);
     }
 
     public void Dispose()
     {
-        GoatImage.Dispose();
+        goatImage.Dispose();
     }
 
     public override void Draw()
@@ -37,7 +37,7 @@ public class MainWindow : Window, IDisposable
 
         ImGui.Text("Have a goat:");
         ImGui.Indent(55);
-        ImGui.Image(GoatImage.ImGuiHandle, new Vector2(GoatImage.Width, GoatImage.Height));
+        ImGui.Image(goatImage.ImGuiHandle, new Vector2(goatImage.Width, goatImage.Height));
         ImGui.Unindent(55);
     }
 }

@@ -23,8 +23,8 @@ public class LodestoneService
 
     private string WorldIdToName(uint worldId)
     {
-        var Worlds = plugin.DataManager.GetExcelSheet<World>();
-        var World = Worlds.GetRow(worldId);
-        return World.Name;
+        var worlds = plugin.DataManager.GetExcelSheet<World>();
+        var world = worlds?.GetRow(worldId);
+        return world != null ? world.Name : "Unknown";
     }
 }
