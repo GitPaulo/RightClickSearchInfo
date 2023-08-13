@@ -8,7 +8,7 @@ Dead simple plugin I just want to have this feature in my vidya gayme.
 
 This plugin will add two context menu items and two commands to open a player target in search or lodestone.
 
-1. Through target context menu `View In Search` / `Open In Lodestone'`
+1. Through target context menu `View In Search` / `Open In Lodestone`
 
 ![preview.png](preview.png)
 
