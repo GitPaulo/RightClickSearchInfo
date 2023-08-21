@@ -19,7 +19,7 @@ public class TargetContextMenu
         searchItem = new GameObjectContextMenuItem(
             new SeString(new TextPayload("View In Search")), OnOpenPlayerInfo);
         lodestoneItem = new GameObjectContextMenuItem(
-            new SeString(new TextPayload("Open In Lodestone")), OnOpenLodestone);
+            new SeString(new TextPayload("Search In Lodestone")), OnOpenLodestone);
         targetFullName = null;
     }
 
