@@ -1,37 +1,28 @@
-﻿using System.Threading;
-using WindowsInput;
+﻿using WindowsInput;
 using WindowsInput.Native;
-using RightClickSearchInfo.Sound;
 
 using System.Threading.Tasks;
 
 namespace RightClickSearchInfo.Services;
 
-public class ChatAutomationService
+public class ChatAutomationService(Plugin plugin)
 {
-    private readonly Plugin plugin;
-    private readonly InputSimulator inputSimulator;
+    private readonly InputSimulator _inputSimulator = new();
 
-    public readonly int CHAT_ACTION_BUFFER_MS = 750;
-    
-    public ChatAutomationService(Plugin Plugin)
-    {
-        this.plugin = Plugin;
-        inputSimulator = new InputSimulator();
-    }
+    private const int CHAT_ACTION_BUFFER_MS = 750;
 
     public async Task SendMessage(string commandStr)
     {
-        inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+        _inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
 
         await Task.Delay(CHAT_ACTION_BUFFER_MS);
-        inputSimulator.Keyboard.TextEntry(commandStr);
+        _inputSimulator.Keyboard.TextEntry(commandStr);
 
         await Task.Delay(CHAT_ACTION_BUFFER_MS);
-        inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+        _inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
 
         // Confirmation
         Plugin.ChatGui.Print("[AUTOMATED]: " + commandStr);
-        SoundEngine.PlaySound(plugin.PluginResources.NotificationPath);
+        plugin.SoundEngine.PlaySound(plugin.PluginResources.NotificationPath);
     }
 }

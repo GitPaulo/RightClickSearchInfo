@@ -1,88 +1,106 @@
 using Dalamud.ContextMenu;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
+using System;
+using System.Collections.Generic;
 
-namespace RightClickSearchInfo.ContextMenus;
-
-public class TargetContextMenu
+namespace RightClickSearchInfo.ContextMenus
 {
-    private readonly GameObjectContextMenuItem lodestoneItem;
-    private readonly Plugin plugin;
-    private readonly GameObjectContextMenuItem searchItem;
-
-    private string? targetFullName;
-
-    public TargetContextMenu(Plugin plugin)
+    public class TargetContextMenu : IDisposable
     {
-        this.plugin = plugin;
-        this.plugin.ContextMenu.OnOpenGameObjectContextMenu += OpenGameObjectContextMenu;
-        searchItem = new GameObjectContextMenuItem(
-            new SeString(new TextPayload("View In Search")), OnOpenPlayerInfo);
-        lodestoneItem = new GameObjectContextMenuItem(
-            new SeString(new TextPayload("Search In Lodestone")), OnOpenLodestone);
-        targetFullName = null;
-    }
+        private readonly GameObjectContextMenuItem _lodestoneMenuItem;
+        private readonly Plugin _plugin;
+        private readonly GameObjectContextMenuItem _searchMenuItem;
+        private string? _targetFullName;
+        
+        private static DalamudContextMenu? _contextMenu;
 
-    public void Dispose()
-    {
-        plugin.ContextMenu.OnOpenGameObjectContextMenu -= OpenGameObjectContextMenu;
-    }
-
-    private static bool shouldShowMenu(BaseContextMenuArgs args)
-    {
-        switch (args.ParentAddonName)
+        public TargetContextMenu(Plugin plugin)
         {
-            case null:
-            case "LookingForGroup":
-            case "PartyMemberList":
-            case "FriendList":
-            case "FreeCompany":
-            case "SocialList":
-            case "ContactList":
-            case "ChatLog":
-            case "_PartyList":
-            case "LinkShell":
-            case "CrossWorldLinkshell":
-            case "ContentMemberList":
-            case "BlackList":
-                return args.Text != null && args.ObjectWorld != 0 && args.ObjectWorld != 65535;
-
-            default:
-                return false;
+            _plugin = plugin;
+            _contextMenu = new DalamudContextMenu(_plugin.PluginInterface);
+            
+            _searchMenuItem = new GameObjectContextMenuItem("View In Search", OnOpenPlayerInfo);
+            _lodestoneMenuItem = new GameObjectContextMenuItem("Search In Lodestone", OnOpenLodestone);
+            
+            Enable();
         }
-    }
 
-    private void OpenGameObjectContextMenu(GameObjectContextMenuOpenArgs args)
-    {
-        // hide on own player
-        if (args.ObjectId == Plugin.ClientState.LocalPlayer!.ObjectId) return;
+        public void Dispose()
+        {
+            Disable();
+        }
+        
+        private void Enable()
+        {
+            _contextMenu!.OnOpenGameObjectContextMenu += OnOpenGameObjectContextMenu;
+        }
 
-        // validate menu
-        if (!shouldShowMenu(args)) return;
+        private void Disable()
+        {
+            _contextMenu!.OnOpenGameObjectContextMenu -= OnOpenGameObjectContextMenu;
+        }
 
-        // save target name
-        targetFullName = args.Text!.ToString();
+        private bool ShouldShowMenu(BaseContextMenuArgs args)
+        {
+            if (args.ParentAddonName == null) return true;
 
-        // add item to context menu
-        args.AddCustomItem(searchItem);
-        args.AddCustomItem(lodestoneItem);
-    }
+            var validParentAddons = new HashSet<string>
+            {
+                "LookingForGroup", "PartyMemberList", "FriendList", "FreeCompany",
+                "SocialList", "ContactList", "ChatLog", "_PartyList", "LinkShell",
+                "CrossWorldLinkshell", "ContentMemberList", "BlackList"
+            };
 
-    private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
-    {
-        if (targetFullName == null) return;
+            return validParentAddons.Contains(args.ParentAddonName) &&
+                   args.Text != null &&
+                   args.ObjectWorld != 0 &&
+                   args.ObjectWorld != 65535;
+        }
 
-        var targetNameSplit = targetFullName.Split(' ');
-        var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
+        private void OnOpenGameObjectContextMenu(GameObjectContextMenuOpenArgs args)
+        {
+            // Hide menu if it's the local player
+            if (args.ObjectId == Plugin.ClientState.LocalPlayer!.ObjectId)
+            {
+                return;
+            }
 
-        #pragma warning disable CS4014
-        plugin.ChatAutomationService.SendMessage(searchCommand);
-    }
+            // Validate menu
+            if (!ShouldShowMenu(args))
+            {
+                return;
+            }
 
-    private void OnOpenLodestone(GameObjectContextMenuItemSelectedArgs args)
-    {
-        if (targetFullName == null) return;
+            // Save target name
+            _targetFullName = args.Text!.ToString();
 
-        plugin.LodestoneService.OpenCharacterLodestone(targetFullName, args.ObjectWorld);
-    }
-}
+            // Add item to context menu
+            args.AddCustomItem(_searchMenuItem);
+            args.AddCustomItem(_lodestoneMenuItem);
+        }
+
+        private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
+        {
+            // If the target name is null, return
+            if (_targetFullName == null)
+            {
+                return;
+            }
+
+            var targetNameSplit = _targetFullName.Split(' ');
+            var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
+
+            // Discard return value because the call is not awaited
+            _ = _plugin.ChatAutomationService.SendMessage(searchCommand);
+        }
+
+        private void OnOpenLodestone(GameObjectContextMenuItemSelectedArgs args)
+        {
+            // If the target name is null, return
+            if (_targetFullName == null)
+            {
+                return;
+            }
+
+            _plugin.LodestoneService.OpenCharacterLodestone(_targetFullName, args.ObjectWorld);
+        }
+    }}

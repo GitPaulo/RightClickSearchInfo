@@ -1,0 +1,28 @@
+[
+  {
+    "Author": "GitPaulo",
+    "Name": "Right Click Search Info",
+    "Description": "Rich click a player and view their search info and more.",
+    "InternalName": "RightClickSearchInfo",
+    "AssemblyVersion": "1.0.0",
+    "RepoUrl": "https://github.com/GitPaulo/RightClickSearchInfo",
+    "IconUrl": "https://raw.githubusercontent.com/GitPaulo/RightClickSearchInfo/master/Data/icon.png",
+    "ApplicableVersion": "any",
+    "Tags": [
+      "dalamud",
+      "search",
+      "info",
+      "lodestone",
+      "GitPaulo",
+      "artin"
+    ],
+    "DalamudApiLevel": 9,
+    "IsHide": "False",
+    "IsTestingExclusive": "False",
+    "LastUpdated": 1708943558,
+    "DownloadCount": 0,
+    "DownloadLinkInstall": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/1.0.0/RightClickSearchInfo.zip",
+    "DownloadLinkTesting": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/1.0.0/RightClickSearchInfo.zip",
+    "DownloadLinkUpdate": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/1.0.0/RightClickSearchInfo.zip"
+  }
+]

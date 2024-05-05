@@ -1,10 +1,6 @@
 # RightClickSearchInfo
 
-I don't see sharp.
-
-Dead simple plugin I just want to have this feature in my vidya gayme.
-
-## Usage
+> **Note:** This plugin uses input automation to interact with FFXIV's chat. It doesn't manipulate in-game memory.
 
 This plugin will add two context menu items and two commands to open a player target in search or lodestone.
 
@@ -14,4 +10,5 @@ This plugin will add two context menu items and two commands to open a player ta
 
 2. Through chat commands w/ mouse over: `/seamo` and `/lodmo`
 
-> **Note:** This plugin uses input automation to interact with FFXIV's chat
+
+### Installation through `https://raw.githubusercontent.com/GitPaulo/RightClickSearchInfo/master/repo.json`

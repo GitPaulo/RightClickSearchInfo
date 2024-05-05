@@ -1,160 +1,147 @@
 ﻿using System.IO;
-using Dalamud.ContextMenu;
-using Dalamud.Data;
-using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using RightClickSearchInfo.ContextMenus;
 using RightClickSearchInfo.Services;
+using RightClickSearchInfo.Sound;
 using RightClickSearchInfo.Windows;
 
-namespace RightClickSearchInfo;
-
-public sealed class Plugin : IDalamudPlugin
+namespace RightClickSearchInfo
 {
-    private const string MainCommand = "/rcsi";
-    private const string SearchOverCommand = "/seamo";
-    private const string LodestoneOverCommand = "/lodmo";
-
-    public readonly Resources PluginResources;
-    private readonly TargetManager TargetManager;
-    public DalamudContextMenu ContextMenu = null!;
-
-
-    public WindowSystem WindowSystem = new("RightClickSearchInfo");
-
-    public Plugin(
-        [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-        [RequiredVersion("1.0")] CommandManager commandManager,
-        [RequiredVersion("1.0")] TargetManager targetManager,
-        [RequiredVersion("1.0")] DataManager dataManager
-    )
+    public sealed class Plugin : IDalamudPlugin
     {
-        PluginInterface = pluginInterface;
-        CommandManager = commandManager;
-        TargetManager = targetManager;
-        DataManager = dataManager;
+        private const string MainCommand = "/rcsi";
+        private const string SearchOverCommand = "/seamo";
+        private const string LodestoneOverCommand = "/lodmo";
+        private readonly MainWindow _mainWindow;
+        private readonly TargetContextMenu _targetContextMenu;
+        private readonly WindowSystem _windowSystem = new("RightClickSearchInfo");
+        
+        public Resources PluginResources { get; }
+        public static IChatGui? ChatGui { get; private set; }
+        public static IClientState? ClientState { get; private set; }
+        public IDataManager DataManager { get; init; }
+        public ICommandManager CommandManager { get; init; }
+        public ITargetManager TargetManager { get; init; }
+        public IPluginLog PluginLog { get; init; }
+        public ChatAutomationService ChatAutomationService { get; set; }
+        public LodestoneService LodestoneService { get; set; }
+        public SoundEngine SoundEngine { get; set; }
+        public DalamudPluginInterface PluginInterface { get; init; }
 
-        // Resources
-        var goatPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-        var notifPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "notif.mp3");
-        PluginResources = new Resources(goatPath, notifPath);
-
-        // Services
-        ChatAutomationService = new ChatAutomationService(this);
-        LodestoneService = new LodestoneService(this);
-
-        // Windows
-        MainWindow = new MainWindow(this);
-        WindowSystem.AddWindow(MainWindow);
-
-        // Context Menu
-        ContextMenu = new DalamudContextMenu();
-        TargetContextMenu = new TargetContextMenu(this);
-
-        // Commands
-        CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
+        public Plugin(
+            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
+            [RequiredVersion("1.0")] IChatGui? chatGui,
+            [RequiredVersion("1.0")] IClientState? clientState,
+            [RequiredVersion("1.0")] ICommandManager commandManager,
+            [RequiredVersion("1.0")] ITargetManager targetManager,
+            [RequiredVersion("1.0")] IDataManager dataManager,
+            [RequiredVersion("1.0")] IPluginLog pluginLog
+        )
         {
-            HelpMessage = "Usage instructions."
-        });
-        CommandManager.AddHandler(SearchOverCommand, new CommandInfo(OnSearchOverCommand)
-        {
-            HelpMessage = "Search info command for mouse over target."
-        });
-        CommandManager.AddHandler(LodestoneOverCommand, new CommandInfo(OnLodestoneOverCommand)
-        {
-            HelpMessage = "Lodestone command for mouse over target."
-        });
+            ChatGui = chatGui;
+            ClientState = clientState;
+            PluginInterface = pluginInterface;
+            CommandManager = commandManager;
+            TargetManager = targetManager;
+            DataManager = dataManager;
+            PluginLog = pluginLog;
 
-        // Hooks
-        PluginInterface.UiBuilder.Draw += DrawUI;
-    }
+            // Resources
+            var assemblyDirectory = pluginInterface.AssemblyLocation.Directory?.FullName!;
+            var goatPath = Path.Combine(assemblyDirectory, "goat.png");
+            var notifPath = Path.Combine(assemblyDirectory, "notif.mp3");
+            PluginResources = new Resources(goatPath, notifPath);
 
-    [PluginService]
-    [RequiredVersion("1.0")]
-    public static ClientState ClientState { get; private set; } = null!;
+            // Sound
+            SoundEngine = new SoundEngine(pluginLog);
+            
+            // Services
+            ChatAutomationService = new ChatAutomationService(this);
+            LodestoneService = new LodestoneService(this);
 
-    [PluginService]
-    [RequiredVersion("1.0")]
-    public static ChatGui ChatGui { get; private set; } = null!;
+            // Windows
+            _mainWindow = new MainWindow(this);
+            _windowSystem.AddWindow(_mainWindow);
 
-    public ChatAutomationService ChatAutomationService { get; set; } = null!;
-    public LodestoneService LodestoneService { get; set; } = null!;
+            // Context Menu
+            _targetContextMenu = new TargetContextMenu(this);
+            
+            // Commands
+            CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
+            {
+                HelpMessage = "Usage instructions."
+            });
+            CommandManager.AddHandler(SearchOverCommand, new CommandInfo(OnSearchOverCommand)
+            {
+                HelpMessage = "Search info command for mouse over target."
+            });
+            CommandManager.AddHandler(LodestoneOverCommand, new CommandInfo(OnLodestoneOverCommand)
+            {
+                HelpMessage = "Lodestone command for mouse over target."
+            });
 
-    public DalamudPluginInterface PluginInterface { get; init; }
-    private CommandManager CommandManager { get; init; }
-    public DataManager DataManager { get; init; }
-
-    private MainWindow MainWindow { get; init; }
-    private TargetContextMenu TargetContextMenu { get; init; }
-
-    public string Name => "Right Click Search info";
-
-    public void Dispose()
-    {
-        WindowSystem.RemoveAllWindows();
-
-        MainWindow.Dispose();
-        TargetContextMenu.Dispose();
-
-        CommandManager.RemoveHandler(MainCommand);
-        CommandManager.RemoveHandler(SearchOverCommand);
-        CommandManager.RemoveHandler(LodestoneOverCommand);
-    }
-
-    private void OnMainCommand(string command, string args)
-    {
-        // in response to the slash command, just display our main ui
-        MainWindow.IsOpen = true;
-    }
-
-    private void OnSearchOverCommand(string command, string args)
-    {
-        var target = TargetManager.MouseOverTarget;
-        if (target == null || target.ObjectKind != ObjectKind.Player) return;
-
-        var targetFullName = target.Name.ToString();
-        var targetNameSplit = targetFullName.Split(' ');
-        var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
-
-        #pragma warning disable CS4014 
-        ChatAutomationService.SendMessage(searchCommand);
-    }
-
-    private void OnLodestoneOverCommand(string command, string args)
-    {
-        var target = TargetManager.MouseOverTarget;
-        if (target == null || target.ObjectKind != ObjectKind.Player) return;
-
-        var targetFullName = target.Name.ToString();
-        var worldId = ClientState?.LocalPlayer?.CurrentWorld.Id;
-
-        if (worldId != null)
-        {
-            LodestoneService.OpenCharacterLodestone(targetFullName, worldId.Value);
+            // Hooks
+            PluginInterface.UiBuilder.Draw += DrawUi;
         }
-    }
-
-    private void DrawUI()
-    {
-        WindowSystem.Draw();
-    }
-
-
-    public struct Resources
-    {
-        public string GoatPath { get; }
-        public string NotificationPath { get; }
-
-        public Resources(string goatPath, string notificationPath)
+        
+        public void Dispose()
         {
-            GoatPath = goatPath;
-            NotificationPath = notificationPath;
+            _windowSystem.RemoveAllWindows();
+            _mainWindow.Dispose();
+            _targetContextMenu.Dispose();
+
+            CommandManager.RemoveHandler(MainCommand);
+            CommandManager.RemoveHandler(SearchOverCommand);
+            CommandManager.RemoveHandler(LodestoneOverCommand);
+        }
+
+        private void OnMainCommand(string command, string args)
+        {
+            // in response to the slash command, just display our main ui
+            _mainWindow.IsOpen = true;
+        }
+
+        private void OnSearchOverCommand(string command, string args)
+        {
+            var target = TargetManager.MouseOverTarget;
+            if (target == null || target.ObjectKind != ObjectKind.Player) return;
+
+            var targetFullName = target.Name.ToString();
+            var targetNameSplit = targetFullName.Split(' ');
+            var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
+
+            #pragma warning disable CS4014 
+            ChatAutomationService.SendMessage(searchCommand);
+        }
+
+        private void OnLodestoneOverCommand(string command, string args)
+        {
+            var target = TargetManager.MouseOverTarget;
+            if (target == null || target.ObjectKind != ObjectKind.Player) return;
+
+            var targetFullName = target.Name.ToString();
+            var worldId = ClientState?.LocalPlayer?.CurrentWorld.Id;
+
+            if (worldId != null)
+            {
+                LodestoneService.OpenCharacterLodestone(targetFullName, worldId.Value);
+            }
+        }
+
+        private void DrawUi()
+        {
+            _windowSystem.Draw();
+        }
+
+        public readonly struct Resources(string goatPath, string notificationPath)
+        {
+            public string NotificationPath { get; } = notificationPath;
         }
     }
 }
