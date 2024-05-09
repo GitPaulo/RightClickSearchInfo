@@ -6,10 +6,12 @@ namespace RightClickSearchInfo.ContextMenus
 {
     public class TargetContextMenu : IDisposable
     {
-        private readonly GameObjectContextMenuItem _lodestoneMenuItem;
         private readonly Plugin _plugin;
+        private readonly GameObjectContextMenuItem _lodestoneMenuItem;
         private readonly GameObjectContextMenuItem _searchMenuItem;
+        private readonly GameObjectContextMenuItem _ffxivCollectMenuItem;
         private string? _targetFullName;
+        private ushort _targetWorldId;
         
         private static DalamudContextMenu? _contextMenu;
 
@@ -18,8 +20,9 @@ namespace RightClickSearchInfo.ContextMenus
             _plugin = plugin;
             _contextMenu = new DalamudContextMenu(_plugin.PluginInterface);
             
-            _searchMenuItem = new GameObjectContextMenuItem("View In Search", OnOpenPlayerInfo);
-            _lodestoneMenuItem = new GameObjectContextMenuItem("Search In Lodestone", OnOpenLodestone);
+            _searchMenuItem = new GameObjectContextMenuItem("🔍 View In Search", OnOpenPlayerInfo);
+            _lodestoneMenuItem = new GameObjectContextMenuItem("🌐 Search In Lodestone", OnOpenLodestone);
+            _ffxivCollectMenuItem = new GameObjectContextMenuItem("📘 Search In FFXIV Collect", OnOpenFFXIVCollect);
             
             Enable();
         }
@@ -59,7 +62,7 @@ namespace RightClickSearchInfo.ContextMenus
         private void OnOpenGameObjectContextMenu(GameObjectContextMenuOpenArgs args)
         {
             // Hide menu if it's the local player
-            if (args.ObjectId == Plugin.ClientState.LocalPlayer!.ObjectId)
+            if (args.ObjectId == Plugin.ClientState?.LocalPlayer!.ObjectId)
             {
                 return;
             }
@@ -72,10 +75,12 @@ namespace RightClickSearchInfo.ContextMenus
 
             // Save target name
             _targetFullName = args.Text!.ToString();
+            _targetWorldId = args.ObjectWorld;
 
             // Add item to context menu
             args.AddCustomItem(_searchMenuItem);
             args.AddCustomItem(_lodestoneMenuItem);
+            args.AddCustomItem(_ffxivCollectMenuItem);
         }
 
         private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
@@ -86,10 +91,7 @@ namespace RightClickSearchInfo.ContextMenus
                 return;
             }
 
-            var targetNameSplit = _targetFullName.Split(' ');
-            var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
-
-            // Discard return value because the call is not awaited
+            var searchCommand = _plugin.SearchInfoCommandService.CreateCommandString(_targetFullName);
             _ = _plugin.ChatAutomationService.SendMessage(searchCommand);
         }
 
@@ -101,6 +103,17 @@ namespace RightClickSearchInfo.ContextMenus
                 return;
             }
 
-            _plugin.LodestoneService.OpenCharacterLodestone(_targetFullName, args.ObjectWorld);
+            _plugin.LodestoneService.OpenCharacterLodestone(_targetFullName, _targetWorldId);
+        }
+        
+        private void OnOpenFFXIVCollect(GameObjectContextMenuItemSelectedArgs args)
+        {
+            // If the target name is null, return
+            if (_targetFullName == null)
+            {
+                return;
+            }
+
+            _plugin.FFXIVCollectService.OpenCharacterFFXIVCollect(_targetFullName, _targetWorldId);
         }
     }}

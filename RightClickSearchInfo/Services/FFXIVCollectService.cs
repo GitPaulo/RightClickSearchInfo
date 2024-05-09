@@ -1,18 +1,18 @@
-using Dalamud.Utility;
+﻿using Dalamud.Utility;
 using Lumina.Excel.GeneratedSheets;
 
 namespace RightClickSearchInfo.Services;
 
-public class LodestoneService(Plugin plugin)
+public class FFXIVCollectService(Plugin plugin)
 {
-    public void OpenCharacterLodestone(string fullName, uint worldId)
+    public void OpenCharacterFFXIVCollect(string fullName, uint worldId)
     {
         var world = WorldIdToName(worldId);
         if (world == "Unknown")
         {
-            Plugin.ChatGui.Print("Failed to retrieve world name. Opening lodestone without world information.");
+            Plugin.ChatGui.Print("Failed to retrieve world name. Opening FFXIV collect without world information.");
         }
-        Util.OpenLink($"https://eu.finalfantasyxiv.com/lodestone/character/?q={fullName}&worldname={world}");
+        Util.OpenLink($"https://ffxivcollect.com/characters/search?server={world}&name={fullName}");
         plugin.SoundEngine.PlaySound(plugin.PluginResources.NotificationPath);
     }
 

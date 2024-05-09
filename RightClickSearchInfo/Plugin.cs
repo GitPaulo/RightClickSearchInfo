@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
@@ -18,6 +19,8 @@ namespace RightClickSearchInfo
         private const string MainCommand = "/rcsi";
         private const string SearchOverCommand = "/seamo";
         private const string LodestoneOverCommand = "/lodmo";
+        private const string FFXIVCollectOverCommand = "/fcmo";
+        
         private readonly MainWindow _mainWindow;
         private readonly TargetContextMenu _targetContextMenu;
         private readonly WindowSystem _windowSystem = new("RightClickSearchInfo");
@@ -31,6 +34,8 @@ namespace RightClickSearchInfo
         public IPluginLog PluginLog { get; init; }
         public ChatAutomationService ChatAutomationService { get; set; }
         public LodestoneService LodestoneService { get; set; }
+        public SearchInfoCommandService SearchInfoCommandService { get; set; }
+        public FFXIVCollectService FFXIVCollectService { get; set; }
         public SoundEngine SoundEngine { get; set; }
         public DalamudPluginInterface PluginInterface { get; init; }
 
@@ -54,9 +59,8 @@ namespace RightClickSearchInfo
 
             // Resources
             var assemblyDirectory = pluginInterface.AssemblyLocation.Directory?.FullName!;
-            var goatPath = Path.Combine(assemblyDirectory, "goat.png");
             var notifPath = Path.Combine(assemblyDirectory, "notif.mp3");
-            PluginResources = new Resources(goatPath, notifPath);
+            PluginResources = new Resources(notifPath);
 
             // Sound
             SoundEngine = new SoundEngine(pluginLog);
@@ -64,6 +68,8 @@ namespace RightClickSearchInfo
             // Services
             ChatAutomationService = new ChatAutomationService(this);
             LodestoneService = new LodestoneService(this);
+            SearchInfoCommandService = new SearchInfoCommandService(this);
+            FFXIVCollectService = new FFXIVCollectService(this);
 
             // Windows
             _mainWindow = new MainWindow(this);
@@ -85,6 +91,10 @@ namespace RightClickSearchInfo
             {
                 HelpMessage = "Lodestone command for mouse over target."
             });
+            CommandManager.AddHandler(FFXIVCollectOverCommand, new CommandInfo(OnFFXIVCollectOverCommand)
+            {
+                HelpMessage = "FFXIV Collect command for mouse over target."
+            });
 
             // Hooks
             PluginInterface.UiBuilder.Draw += DrawUi;
@@ -99,39 +109,53 @@ namespace RightClickSearchInfo
             CommandManager.RemoveHandler(MainCommand);
             CommandManager.RemoveHandler(SearchOverCommand);
             CommandManager.RemoveHandler(LodestoneOverCommand);
+            CommandManager.RemoveHandler(FFXIVCollectOverCommand);
+            
+            PluginInterface.UiBuilder.Draw -= DrawUi;
         }
 
         private void OnMainCommand(string command, string args)
         {
-            // in response to the slash command, just display our main ui
             _mainWindow.IsOpen = true;
         }
 
         private void OnSearchOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget;
-            if (target == null || target.ObjectKind != ObjectKind.Player) return;
+            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            if (target == null || target.ObjectKind != ObjectKind.Player)
+            {
+                return;
+            }
 
-            var targetFullName = target.Name.ToString();
-            var targetNameSplit = targetFullName.Split(' ');
-            var searchCommand = $"/search forename \"{targetNameSplit[0]}\" surname \"{targetNameSplit[1]}\"";
-
-            #pragma warning disable CS4014 
-            ChatAutomationService.SendMessage(searchCommand);
+            string searchCommand = SearchInfoCommandService.CreateCommandString(target);
+            _ = ChatAutomationService.SendMessage(searchCommand);
         }
 
         private void OnLodestoneOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget;
-            if (target == null || target.ObjectKind != ObjectKind.Player) return;
+            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            if (target == null || target.ObjectKind != ObjectKind.Player)
+            {
+                return;
+            }
 
             var targetFullName = target.Name.ToString();
-            var worldId = ClientState?.LocalPlayer?.CurrentWorld.Id;
+            var worldId = target.HomeWorld.Id;
+            LodestoneService.OpenCharacterLodestone(targetFullName, worldId);
+        }
 
-            if (worldId != null)
+        private void OnFFXIVCollectOverCommand(string command, string args)
+        {
+            
+            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            if (target == null || target.ObjectKind != ObjectKind.Player)
             {
-                LodestoneService.OpenCharacterLodestone(targetFullName, worldId.Value);
+                return;
             }
+
+            var targetFullName = target.Name.ToString();
+            var worldId = target.HomeWorld.Id;
+            FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, worldId);
         }
 
         private void DrawUi()
@@ -139,7 +163,7 @@ namespace RightClickSearchInfo
             _windowSystem.Draw();
         }
 
-        public readonly struct Resources(string goatPath, string notificationPath)
+        public readonly struct Resources(string notificationPath)
         {
             public string NotificationPath { get; } = notificationPath;
         }
