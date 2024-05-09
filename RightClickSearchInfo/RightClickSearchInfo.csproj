@@ -4,7 +4,7 @@
     
     <PropertyGroup>
         <Authors>GitPaulo</Authors>
-        <Version>1.0.0</Version>
+        <Version>1.0.1</Version>
         <Description>A dead simple plugin to right click search info.</Description>
         <IsPackable>false</IsPackable>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
