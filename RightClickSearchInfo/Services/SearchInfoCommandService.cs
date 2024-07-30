@@ -1,10 +1,10 @@
-﻿using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 
 namespace RightClickSearchInfo.Services;
 
 public class SearchInfoCommandService(Plugin plugin)
 {
-   public string CreateCommandString(PlayerCharacter? target)
+   public string CreateCommandString(IPlayerCharacter? target)
    { 
        var targetFullName = target!.Name.ToString(); 
        var targetNameSplit = targetFullName.Split(' '); 

@@ -1,29 +1,42 @@
-using Dalamud.ContextMenu;
 using System;
 using System.Collections.Generic;
+using Dalamud.Game.Gui.ContextMenu;
+using Dalamud.Plugin.Services;
 
 namespace RightClickSearchInfo.ContextMenus
 {
     public class TargetContextMenu : IDisposable
     {
         private readonly Plugin _plugin;
-        private readonly GameObjectContextMenuItem _lodestoneMenuItem;
-        private readonly GameObjectContextMenuItem _searchMenuItem;
-        private readonly GameObjectContextMenuItem _ffxivCollectMenuItem;
+        private readonly MenuItem _lodestoneMenuItem;
+        private readonly MenuItem _searchMenuItem;
+        private readonly MenuItem _ffxivCollectMenuItem;
         private string? _targetFullName;
-        private ushort _targetWorldId;
-        
-        private static DalamudContextMenu? _contextMenu;
+        private uint _targetWorldId;
+
+        private static IContextMenu? _contextMenu;
 
         public TargetContextMenu(Plugin plugin)
         {
             _plugin = plugin;
-            _contextMenu = new DalamudContextMenu(_plugin.PluginInterface);
-            
-            _searchMenuItem = new GameObjectContextMenuItem("🔍 View In Search", OnOpenPlayerInfo);
-            _lodestoneMenuItem = new GameObjectContextMenuItem("🌐 Search In Lodestone", OnOpenLodestone);
-            _ffxivCollectMenuItem = new GameObjectContextMenuItem("📘 Search In FFXIV Collect", OnOpenFFXIVCollect);
-            
+            _contextMenu = plugin.ContextMenu;
+
+            _searchMenuItem = new MenuItem
+            {
+                Name = "🔍 View In Search",
+                OnClicked = OnOpenPlayerInfo
+            };
+            _lodestoneMenuItem = new MenuItem
+            {
+                Name = "🌐 Search In Lodestone",
+                OnClicked = OnOpenLodestone
+            };
+            _ffxivCollectMenuItem = new MenuItem
+            {
+                Name = "📘 Search In FFXIV Collect",
+                OnClicked = OnOpenFFXIVCollect
+            };
+
             Enable();
         }
 
@@ -31,20 +44,23 @@ namespace RightClickSearchInfo.ContextMenus
         {
             Disable();
         }
-        
+
         private void Enable()
         {
-            _contextMenu!.OnOpenGameObjectContextMenu += OnOpenGameObjectContextMenu;
+            _contextMenu!.OnMenuOpened += OnContextMenuOpened;
         }
 
         private void Disable()
         {
-            _contextMenu!.OnOpenGameObjectContextMenu -= OnOpenGameObjectContextMenu;
+            _contextMenu!.OnMenuOpened -= OnContextMenuOpened;
         }
 
-        private bool ShouldShowMenu(BaseContextMenuArgs args)
+        private bool IsMenuValid(IMenuArgs menuArgs)
         {
-            if (args.ParentAddonName == null) return true;
+            if (menuArgs.Target is not MenuTargetDefault menuTargetDefault)
+            {
+                return false;
+            }
 
             var validParentAddons = new HashSet<string>
             {
@@ -53,51 +69,44 @@ namespace RightClickSearchInfo.ContextMenus
                 "CrossWorldLinkshell", "ContentMemberList", "BlackList"
             };
 
-            return validParentAddons.Contains(args.ParentAddonName) &&
-                   args.Text != null &&
-                   args.ObjectWorld != 0 &&
-                   args.ObjectWorld != 65535;
+            return validParentAddons.Contains(menuArgs.AddonName) &&
+                   !string.IsNullOrEmpty(menuTargetDefault.TargetName);
+            // TODO: Util.IsWorldValid(menuTargetDefault.TargetHomeWorld.Id)
         }
 
-        private void OnOpenGameObjectContextMenu(GameObjectContextMenuOpenArgs args)
+        private void OnContextMenuOpened(IMenuOpenedArgs menuArgs)
         {
-            // Hide menu if it's the local player
-            if (args.ObjectId == Plugin.ClientState?.LocalPlayer!.ObjectId)
+            if (!IsMenuValid(menuArgs))
             {
                 return;
             }
 
-            // Validate menu
-            if (!ShouldShowMenu(args))
+            if (menuArgs.Target is not MenuTargetDefault menuTargetDefault)
             {
                 return;
             }
 
-            // Save target name
-            _targetFullName = args.Text!.ToString();
-            _targetWorldId = args.ObjectWorld;
+            _targetFullName = menuTargetDefault.TargetName;
+            _targetWorldId = menuTargetDefault.TargetHomeWorld.Id;
 
-            // Add item to context menu
-            args.AddCustomItem(_searchMenuItem);
-            args.AddCustomItem(_lodestoneMenuItem);
-            args.AddCustomItem(_ffxivCollectMenuItem);
+            menuArgs.AddMenuItem(_searchMenuItem);
+            menuArgs.AddMenuItem(_lodestoneMenuItem);
+            menuArgs.AddMenuItem(_ffxivCollectMenuItem);
         }
 
-        private void OnOpenPlayerInfo(GameObjectContextMenuItemSelectedArgs args)
+        private void OnOpenPlayerInfo(IMenuItemClickedArgs args)
         {
-            // If the target name is null, return
             if (_targetFullName == null)
             {
                 return;
             }
 
             var searchCommand = _plugin.SearchInfoCommandService.CreateCommandString(_targetFullName);
-            _ = _plugin.ChatAutomationService.SendMessage(searchCommand);
+            _plugin.ChatAutomationService.SendMessage(searchCommand);
         }
 
-        private void OnOpenLodestone(GameObjectContextMenuItemSelectedArgs args)
+        private void OnOpenLodestone(IMenuItemClickedArgs args)
         {
-            // If the target name is null, return
             if (_targetFullName == null)
             {
                 return;
@@ -105,10 +114,9 @@ namespace RightClickSearchInfo.ContextMenus
 
             _plugin.LodestoneService.OpenCharacterLodestone(_targetFullName, _targetWorldId);
         }
-        
-        private void OnOpenFFXIVCollect(GameObjectContextMenuItemSelectedArgs args)
+
+        private void OnOpenFFXIVCollect(IMenuItemClickedArgs args)
         {
-            // If the target name is null, return
             if (_targetFullName == null)
             {
                 return;
@@ -116,4 +124,5 @@ namespace RightClickSearchInfo.ContextMenus
 
             _plugin.FFXIVCollectService.OpenCharacterFFXIVCollect(_targetFullName, _targetWorldId);
         }
-    }}
+    }
+}

@@ -1,10 +1,9 @@
-﻿using System.IO;
+using System.IO;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
-using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using RightClickSearchInfo.ContextMenus;
@@ -32,21 +31,22 @@ namespace RightClickSearchInfo
         public ICommandManager CommandManager { get; init; }
         public ITargetManager TargetManager { get; init; }
         public IPluginLog PluginLog { get; init; }
+        public IContextMenu ContextMenu {  get; init; }
         public ChatAutomationService ChatAutomationService { get; set; }
         public LodestoneService LodestoneService { get; set; }
         public SearchInfoCommandService SearchInfoCommandService { get; set; }
         public FFXIVCollectService FFXIVCollectService { get; set; }
         public SoundEngine SoundEngine { get; set; }
-        public DalamudPluginInterface PluginInterface { get; init; }
+        public IDalamudPluginInterface PluginInterface { get; init; }
 
         public Plugin(
-            [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] IChatGui? chatGui,
-            [RequiredVersion("1.0")] IClientState? clientState,
-            [RequiredVersion("1.0")] ICommandManager commandManager,
-            [RequiredVersion("1.0")] ITargetManager targetManager,
-            [RequiredVersion("1.0")] IDataManager dataManager,
-            [RequiredVersion("1.0")] IPluginLog pluginLog
+            IDalamudPluginInterface pluginInterface,
+            IChatGui? chatGui,
+            IClientState? clientState,
+            ICommandManager commandManager,
+            ITargetManager targetManager,
+            IDataManager dataManager,
+            IPluginLog pluginLog
         )
         {
             ChatGui = chatGui;
@@ -121,7 +121,7 @@ namespace RightClickSearchInfo
 
         private void OnSearchOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
@@ -133,7 +133,7 @@ namespace RightClickSearchInfo
 
         private void OnLodestoneOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
@@ -147,7 +147,7 @@ namespace RightClickSearchInfo
         private void OnFFXIVCollectOverCommand(string command, string args)
         {
             
-            var target = TargetManager.MouseOverTarget as PlayerCharacter;
+            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <Import Project="Dalamud.Plugin.Bootstrap.targets"/>
-    
+
     <PropertyGroup>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <LangVersion>12.0</LangVersion>
+        <EnablePreviewFeatures>true</EnablePreviewFeatures>
         <Authors>GitPaulo</Authors>
         <Version>1.0.1</Version>
         <Description>A dead simple plugin to right click search info.</Description>
@@ -10,7 +13,7 @@
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/GitPaulo/RightClickSearchInfo</PackageProjectUrl>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <Content Include="..\Data\notif.mp3">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -46,9 +49,8 @@
             <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <PackageReference Include="Dalamud.ContextMenu" Version="1.3.1" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="InputSimulatorPlus" Version="1.0.7"/>
         <PackageReference Include="NAudio" Version="2.1.0"/>
