@@ -12,6 +12,7 @@
         <IsPackable>false</IsPackable>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/GitPaulo/RightClickSearchInfo</PackageProjectUrl>
+        <RootNamespace>RightClickSearchInfo</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

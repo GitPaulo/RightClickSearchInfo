@@ -46,7 +46,8 @@ namespace RightClickSearchInfo
             ICommandManager commandManager,
             ITargetManager targetManager,
             IDataManager dataManager,
-            IPluginLog pluginLog
+            IPluginLog pluginLog,
+            IContextMenu contextMenu
         )
         {
             ChatGui = chatGui;
@@ -56,6 +57,7 @@ namespace RightClickSearchInfo
             TargetManager = targetManager;
             DataManager = dataManager;
             PluginLog = pluginLog;
+            ContextMenu = contextMenu;
 
             // Resources
             var assemblyDirectory = pluginInterface.AssemblyLocation.Directory?.FullName!;
@@ -98,13 +100,14 @@ namespace RightClickSearchInfo
 
             // Hooks
             PluginInterface.UiBuilder.Draw += DrawUi;
+            _targetContextMenu.Enable();
         }
         
         public void Dispose()
         {
             _windowSystem.RemoveAllWindows();
             _mainWindow.Dispose();
-            _targetContextMenu.Dispose();
+            _targetContextMenu.Disable();
 
             CommandManager.RemoveHandler(MainCommand);
             CommandManager.RemoveHandler(SearchOverCommand);
