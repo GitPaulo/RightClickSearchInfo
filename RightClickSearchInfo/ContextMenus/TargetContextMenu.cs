@@ -1,11 +1,12 @@
 using System.Linq;
 using Dalamud.Game.Gui.ContextMenu;
+using RightClickSearchInfo.Utils;
 
 namespace RightClickSearchInfo.ContextMenus
 {
     public class TargetContextMenu
     {
-        private readonly Plugin _plugin;
+        private Plugin _plugin;
         private readonly MenuItem _searchMenuItem;
         private readonly MenuItem _ffLogsMenuItem;
         private readonly MenuItem _lodestoneMenuItem;
@@ -54,7 +55,7 @@ namespace RightClickSearchInfo.ContextMenus
             _plugin.ContextMenu.OnMenuOpened -= OnContextMenuOpened;
         }
 
-        private static bool IsMenuValid(IMenuArgs menuOpenedArgs)
+        private static bool IsMenuValid(IMenuArgs menuOpenedArgs, Plugin plugin)
         {
             if (menuOpenedArgs.Target is not MenuTargetDefault menuTargetDefault)
             {
@@ -76,7 +77,7 @@ namespace RightClickSearchInfo.ContextMenus
                 case "CrossWorldLinkshell":
                 case "ContentMemberList":
                 case "BeginnerChatList":
-                    return menuTargetDefault.TargetName != string.Empty;
+                    return menuTargetDefault.TargetName != string.Empty && WorldUtils.IsWorldValid(menuTargetDefault.TargetHomeWorld.Id, plugin);
 
                 case "BlackList":
                 case "MuteList":
@@ -86,10 +87,10 @@ namespace RightClickSearchInfo.ContextMenus
             return false;
         }
 
-
         private void OnContextMenuOpened(IMenuOpenedArgs menuArgs)
         {
-            if (!IsMenuValid(menuArgs) || menuArgs.Target is not MenuTargetDefault menuTargetDefault)
+            if (!IsMenuValid(menuArgs, _plugin) || menuArgs.Target is not MenuTargetDefault menuTargetDefault ||
+                !_plugin.PluginInterface.UiBuilder.ShouldModifyUi)
             {
                 return;
             }
@@ -97,12 +98,22 @@ namespace RightClickSearchInfo.ContextMenus
             _targetFullName = menuTargetDefault.TargetName;
             _targetWorldId = menuTargetDefault.TargetHomeWorld.Id;
 
-            menuArgs.AddMenuItem(_searchMenuItem);
-            menuArgs.AddMenuItem(_lodestoneMenuItem);
-            menuArgs.AddMenuItem(_ffxivCollectMenuItem);
+            if (_plugin.Configuration.ShowSearchInfoItem) {
+                menuArgs.AddMenuItem(_searchMenuItem);
+            }
+
+            if (_plugin.Configuration.ShowLodestoneItem)
+            {
+                menuArgs.AddMenuItem(_lodestoneMenuItem);
+            }
+
+            if (_plugin.Configuration.ShowFFXIVCollectItem)
+            {
+                menuArgs.AddMenuItem(_ffxivCollectMenuItem);
+            }
 
             // Check if FFLogs plugin is enabled
-            var isFFLogsEnabled = _plugin.PluginInterface.InstalledPlugins.Any(pluginInfo => pluginInfo.InternalName == "FFLogsViewer" && pluginInfo.IsLoaded);
+            var isFFLogsEnabled = _plugin.PluginInterface.InstalledPlugins.Any(pluginInfo => pluginInfo.InternalName == "FFLogsViewer" && pluginInfo.IsLoaded) && _plugin.Configuration.ShowFFLogsItem;
             if (!isFFLogsEnabled)
             {
                 menuArgs.AddMenuItem(_ffLogsMenuItem);

@@ -19,10 +19,11 @@ namespace RightClickSearchInfo
         private const string SearchOverCommand = "/seamo";
         private const string LodestoneOverCommand = "/lodmo";
         private const string FFXIVCollectOverCommand = "/fcmo";
-        
-        private readonly MainWindow _mainWindow;
+        private const string FFLogsOverCommand = "/fflmo";
+
         private readonly TargetContextMenu _targetContextMenu;
         private readonly WindowSystem _windowSystem = new("RightClickSearchInfo");
+        public Configuration Configuration { get; init; }
         
         public Resources PluginResources { get; }
         public static IChatGui? ChatGui { get; private set; }
@@ -32,13 +33,15 @@ namespace RightClickSearchInfo
         public ITargetManager TargetManager { get; init; }
         public IPluginLog PluginLog { get; init; }
         public IContextMenu ContextMenu {  get; init; }
+        public IDalamudPluginInterface PluginInterface { get; init; }
         public ChatAutomationService ChatAutomationService { get; set; }
         public LodestoneService LodestoneService { get; set; }
         public SearchInfoCommandService SearchInfoCommandService { get; set; }
         public FFXIVCollectService FFXIVCollectService { get; set; }
         public FFLogsService FFLogsService { get; set; }
         public SoundEngine SoundEngine { get; set; }
-        public IDalamudPluginInterface PluginInterface { get; init; }
+        private ConfigWindow ConfigWindow { get; init; }
+        private MainWindow MainWindow { get; init; }
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -51,6 +54,10 @@ namespace RightClickSearchInfo
             IContextMenu contextMenu
         )
         {
+            // Config
+            Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+
+            // Init
             ChatGui = chatGui;
             ClientState = clientState;
             PluginInterface = pluginInterface;
@@ -76,13 +83,16 @@ namespace RightClickSearchInfo
             FFLogsService = new FFLogsService(this);
 
             // Windows
-            _mainWindow = new MainWindow(this);
-            _windowSystem.AddWindow(_mainWindow);
+            ConfigWindow = new ConfigWindow(this);
+            MainWindow = new MainWindow(this);
+            _windowSystem.AddWindow(MainWindow);
+            _windowSystem.AddWindow(ConfigWindow);
 
             // Context Menu
             _targetContextMenu = new TargetContextMenu(this);
             
             // Commands
+            // I know these are kind of dumb but its my first Dalamud plugin IDC
             CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
             {
                 HelpMessage = "Usage instructions."
@@ -99,8 +109,13 @@ namespace RightClickSearchInfo
             {
                 HelpMessage = "FFXIV Collect command for mouse over target."
             });
+            CommandManager.AddHandler(FFLogsOverCommand, new CommandInfo(OnFFLogsOverCommand)
+            {
+                HelpMessage = "FFLogs command for mouse over target."
+            });
 
             // Hooks
+            PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
             PluginInterface.UiBuilder.Draw += DrawUi;
             _targetContextMenu.Enable();
         }
@@ -108,20 +123,25 @@ namespace RightClickSearchInfo
         public void Dispose()
         {
             _windowSystem.RemoveAllWindows();
-            _mainWindow.Dispose();
-            _targetContextMenu.Disable();
 
             CommandManager.RemoveHandler(MainCommand);
             CommandManager.RemoveHandler(SearchOverCommand);
             CommandManager.RemoveHandler(LodestoneOverCommand);
             CommandManager.RemoveHandler(FFXIVCollectOverCommand);
-            
+            CommandManager.RemoveHandler(FFLogsOverCommand);
+
             PluginInterface.UiBuilder.Draw -= DrawUi;
+            _targetContextMenu.Disable();
+        }
+
+        public void ToggleConfigUI()
+        {
+            ConfigWindow.Toggle();
         }
 
         private void OnMainCommand(string command, string args)
         {
-            _mainWindow.IsOpen = true;
+            MainWindow.Toggle();
         }
 
         private void OnSearchOverCommand(string command, string args)
@@ -161,6 +181,19 @@ namespace RightClickSearchInfo
             var targetFullName = target.Name.ToString();
             var worldId = target.HomeWorld.Id;
             FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, worldId);
+        }
+
+        private void OnFFLogsOverCommand(string command, string args)
+        {
+
+            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
+            if (target == null || target.ObjectKind != ObjectKind.Player)
+            {
+                return;
+            }
+
+            var targetFullName = target.Name.ToString();
+            FFLogsService.OpenCharacterFFLogs(targetFullName);
         }
 
         private void DrawUi()
