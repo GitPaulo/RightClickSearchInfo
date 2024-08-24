@@ -36,6 +36,7 @@ namespace RightClickSearchInfo
         public LodestoneService LodestoneService { get; set; }
         public SearchInfoCommandService SearchInfoCommandService { get; set; }
         public FFXIVCollectService FFXIVCollectService { get; set; }
+        public FFLogsService FFLogsService { get; set; }
         public SoundEngine SoundEngine { get; set; }
         public IDalamudPluginInterface PluginInterface { get; init; }
 
@@ -72,6 +73,7 @@ namespace RightClickSearchInfo
             LodestoneService = new LodestoneService(this);
             SearchInfoCommandService = new SearchInfoCommandService(this);
             FFXIVCollectService = new FFXIVCollectService(this);
+            FFLogsService = new FFLogsService(this);
 
             // Windows
             _mainWindow = new MainWindow(this);

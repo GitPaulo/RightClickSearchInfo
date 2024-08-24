@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Gui.ContextMenu;
-using Dalamud.Utility;
 
 namespace RightClickSearchInfo.ContextMenus
 {
@@ -129,7 +127,7 @@ namespace RightClickSearchInfo.ContextMenus
                 return;
             }
 
-           // TODO: Open FFLogs
+            _plugin.FFLogsService.OpenCharacterFFLogs(_targetFullName);
         }
 
         private void OnOpenLodestone(IMenuItemClickedArgs args)
