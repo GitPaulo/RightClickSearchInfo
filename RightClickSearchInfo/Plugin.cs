@@ -1,11 +1,9 @@
 using System.IO;
-using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
 using RightClickSearchInfo.ContextMenus;
 using RightClickSearchInfo.Services;
 using RightClickSearchInfo.Sound;
@@ -15,195 +13,179 @@ namespace RightClickSearchInfo
 {
     public sealed class Plugin : IDalamudPlugin
     {
+        private const string Name = "RightClickSearchInfo";
         private const string MainCommand = "/rcsi";
         private const string SearchOverCommand = "/seamo";
         private const string LodestoneOverCommand = "/lodmo";
         private const string FFXIVCollectOverCommand = "/fcmo";
         private const string FFLogsOverCommand = "/fflmo";
 
-        private readonly TargetContextMenu _targetContextMenu;
-        private readonly WindowSystem _windowSystem = new("RightClickSearchInfo");
-        public Configuration Configuration { get; init; }
-        
-        public Resources PluginResources { get; }
-        public static IChatGui? ChatGui { get; private set; }
-        public static IClientState? ClientState { get; private set; }
-        public IDataManager DataManager { get; init; }
-        public ICommandManager CommandManager { get; init; }
-        public ITargetManager TargetManager { get; init; }
-        public IPluginLog PluginLog { get; init; }
-        public IContextMenu ContextMenu {  get; init; }
-        public IDalamudPluginInterface PluginInterface { get; init; }
-        public ChatAutomationService ChatAutomationService { get; set; }
-        public LodestoneService LodestoneService { get; set; }
-        public SearchInfoCommandService SearchInfoCommandService { get; set; }
-        public FFXIVCollectService FFXIVCollectService { get; set; }
-        public FFLogsService FFLogsService { get; set; }
-        public SoundEngine SoundEngine { get; set; }
-        private ConfigWindow ConfigWindow { get; init; }
-        private MainWindow MainWindow { get; init; }
+        private TargetContextMenu targetContextMenu;
+        private readonly WindowSystem windowSystem = new(Name);
 
-        public Plugin(
-            IDalamudPluginInterface pluginInterface,
-            IChatGui? chatGui,
-            IClientState? clientState,
-            ICommandManager commandManager,
-            ITargetManager targetManager,
-            IDataManager dataManager,
-            IPluginLog pluginLog,
-            IContextMenu contextMenu
-        )
+        public Plugin(IDalamudPluginInterface pluginInterface)
         {
-            // Config
-            Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            pluginInterface.Create<Shared>();
 
-            // Init
-            ChatGui = chatGui;
-            ClientState = clientState;
-            PluginInterface = pluginInterface;
-            CommandManager = commandManager;
-            TargetManager = targetManager;
-            DataManager = dataManager;
-            PluginLog = pluginLog;
-            ContextMenu = contextMenu;
+            Shared.Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-            // Resources
-            var assemblyDirectory = pluginInterface.AssemblyLocation.Directory?.FullName!;
-            var notifPath = Path.Combine(assemblyDirectory, "notif.mp3");
-            PluginResources = new Resources(notifPath);
+            InitWindows();
+            InitCommands();
+            InitServices();
+            InitResources();
+            InitSound();
+            InitContextMenu();
+            InitHooks();
 
-            // Sound
-            SoundEngine = new SoundEngine(pluginLog);
-            
-            // Services
-            ChatAutomationService = new ChatAutomationService(this);
-            LodestoneService = new LodestoneService(this);
-            SearchInfoCommandService = new SearchInfoCommandService(this);
-            FFXIVCollectService = new FFXIVCollectService(this);
-            FFLogsService = new FFLogsService(this);
+            Shared.Log.Information($"Loaded {Shared.PluginInterface.Manifest.Name}");
+        }
 
-            // Windows
-            ConfigWindow = new ConfigWindow(this);
-            MainWindow = new MainWindow(this);
-            _windowSystem.AddWindow(MainWindow);
-            _windowSystem.AddWindow(ConfigWindow);
+        private void InitWindows()
+        {
+            Shared.ConfigWindow = new ConfigWindow();
+            Shared.MainWindow = new MainWindow();
 
-            // Context Menu
-            _targetContextMenu = new TargetContextMenu(this);
-            
+            windowSystem.AddWindow(Shared.MainWindow);
+            windowSystem.AddWindow(Shared.ConfigWindow);
+        }
+
+        private void InitCommands()
+        {
             // Commands
             // I know these are kind of dumb but its my first Dalamud plugin IDC
-            CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
+            Shared.CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
             {
                 HelpMessage = "Usage instructions."
             });
-            CommandManager.AddHandler(SearchOverCommand, new CommandInfo(OnSearchOverCommand)
+            Shared.CommandManager.AddHandler(SearchOverCommand, new CommandInfo(OnSearchOverCommand)
             {
                 HelpMessage = "Search info command for mouse over target."
             });
-            CommandManager.AddHandler(LodestoneOverCommand, new CommandInfo(OnLodestoneOverCommand)
+            Shared.CommandManager.AddHandler(LodestoneOverCommand, new CommandInfo(OnLodestoneOverCommand)
             {
                 HelpMessage = "Lodestone command for mouse over target."
             });
-            CommandManager.AddHandler(FFXIVCollectOverCommand, new CommandInfo(OnFFXIVCollectOverCommand)
+            Shared.CommandManager.AddHandler(FFXIVCollectOverCommand, new CommandInfo(OnFFXIVCollectOverCommand)
             {
                 HelpMessage = "FFXIV Collect command for mouse over target."
             });
-            CommandManager.AddHandler(FFLogsOverCommand, new CommandInfo(OnFFLogsOverCommand)
+            Shared.CommandManager.AddHandler(FFLogsOverCommand, new CommandInfo(OnFFLogsOverCommand)
             {
                 HelpMessage = "FFLogs command for mouse over target."
             });
-
-            // Hooks
-            PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
-            PluginInterface.UiBuilder.Draw += DrawUi;
-            _targetContextMenu.Enable();
         }
-        
+
+        private void InitServices()
+        {
+            Shared.ChatAutomationService = new ChatAutomationService();
+            Shared.LodestoneService = new LodestoneService();
+            Shared.SearchInfoCommandService = new SearchInfoCommandService();
+            Shared.FFXIVCollectService = new FFXIVCollectService();
+            Shared.FFLogsService = new FFLogsService();
+        }
+
+        private void InitResources()
+        {
+            var assemblyDirectory = Shared.PluginInterface.AssemblyLocation.Directory?.FullName!;
+            var notifPath = Path.Combine(assemblyDirectory, "notif.mp3");
+
+            Shared.SoundNotificationPath = notifPath;
+        }
+
+        private void InitSound()
+        {
+            Shared.SoundEngine = new SoundEngine();
+        }
+
+        private void InitContextMenu()
+        {
+            targetContextMenu = new TargetContextMenu();
+            targetContextMenu.Enable();
+        }
+
+        private void InitHooks()
+        {
+            Shared.PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
+            Shared.PluginInterface.UiBuilder.Draw += DrawUi;
+        }
+
         public void Dispose()
         {
-            _windowSystem.RemoveAllWindows();
+            windowSystem.RemoveAllWindows();
 
-            CommandManager.RemoveHandler(MainCommand);
-            CommandManager.RemoveHandler(SearchOverCommand);
-            CommandManager.RemoveHandler(LodestoneOverCommand);
-            CommandManager.RemoveHandler(FFXIVCollectOverCommand);
-            CommandManager.RemoveHandler(FFLogsOverCommand);
+            Shared.CommandManager.RemoveHandler(MainCommand);
+            Shared.CommandManager.RemoveHandler(SearchOverCommand);
+            Shared.CommandManager.RemoveHandler(LodestoneOverCommand);
+            Shared.CommandManager.RemoveHandler(FFXIVCollectOverCommand);
+            Shared.CommandManager.RemoveHandler(FFLogsOverCommand);
 
-            PluginInterface.UiBuilder.Draw -= DrawUi;
-            _targetContextMenu.Disable();
+            Shared.PluginInterface.UiBuilder.Draw -= DrawUi;
+            targetContextMenu.Disable();
         }
 
         public void ToggleConfigUI()
         {
-            ConfigWindow.Toggle();
+            Shared.ConfigWindow.Toggle();
         }
 
         private void OnMainCommand(string command, string args)
         {
-            MainWindow.Toggle();
+            Shared.MainWindow.Toggle();
         }
 
         private void OnSearchOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
+            var target = Shared.TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
             }
 
-            string searchCommand = SearchInfoCommandService.CreateCommandString(target);
-            _ = ChatAutomationService.SendMessage(searchCommand);
+            string searchCommand = Shared.SearchInfoCommandService.CreateCommandString(target);
+            _ = Shared.ChatAutomationService.SendMessage(searchCommand);
         }
 
         private void OnLodestoneOverCommand(string command, string args)
         {
-            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
+            var target = Shared.TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
             }
 
             var targetFullName = target.Name.ToString();
-            var worldId = target.HomeWorld.Id;
-            LodestoneService.OpenCharacterLodestone(targetFullName, worldId);
+            var worldId = target.HomeWorld.RowId;
+            Shared.LodestoneService.OpenCharacterLodestone(targetFullName, worldId);
         }
 
         private void OnFFXIVCollectOverCommand(string command, string args)
         {
-            
-            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
+            var target = Shared.TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
             }
 
             var targetFullName = target.Name.ToString();
-            var worldId = target.HomeWorld.Id;
-            FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, worldId);
+            var worldId = target.HomeWorld.RowId;
+            Shared.FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, worldId);
         }
 
         private void OnFFLogsOverCommand(string command, string args)
         {
-
-            var target = TargetManager.MouseOverTarget as IPlayerCharacter;
+            var target = Shared.TargetManager.MouseOverTarget as IPlayerCharacter;
             if (target == null || target.ObjectKind != ObjectKind.Player)
             {
                 return;
             }
 
             var targetFullName = target.Name.ToString();
-            FFLogsService.OpenCharacterFFLogs(targetFullName);
+            Shared.FFLogsService.OpenCharacterFFLogs(targetFullName);
         }
 
         private void DrawUi()
         {
-            _windowSystem.Draw();
-        }
-
-        public readonly struct Resources(string notificationPath)
-        {
-            public string NotificationPath { get; } = notificationPath;
+            windowSystem.Draw();
         }
     }
 }

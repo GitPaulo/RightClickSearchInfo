@@ -7,19 +7,13 @@ namespace RightClickSearchInfo.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    private Configuration Configuration;
-    private Plugin _plugin;
-
-    public ConfigWindow(Plugin plugin) : base("RightClickSearchInfo###With a constant ID")
+    public ConfigWindow() : base("RightClickSearchInfo###With a constant ID")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
         Size = new Vector2(232, 200);
         SizeCondition = ImGuiCond.Always;
-
-        Configuration = plugin.Configuration;
-        _plugin = plugin;
     }
 
     public void Dispose() { }
@@ -27,32 +21,32 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        var shouldConfigurationShowSearchInfoItem = Configuration.ShowSearchInfoItem;
+        var shouldConfigurationShowSearchInfoItem = Shared.Config.ShowSearchInfoItem;
         if (ImGui.Checkbox("Show search info item?", ref shouldConfigurationShowSearchInfoItem))
         {
-            Configuration.ShowSearchInfoItem = shouldConfigurationShowSearchInfoItem;
-            Configuration.Save(_plugin);
+            Shared.Config.ShowSearchInfoItem = shouldConfigurationShowSearchInfoItem;
+            Shared.Config.Save();
         }
         {}
-        var shouldConfigurationShowFFLogsItem = Configuration.ShowFFLogsItem;
+        var shouldConfigurationShowFFLogsItem = Shared.Config.ShowFFLogsItem;
         if (ImGui.Checkbox("Show FFlogs item?", ref shouldConfigurationShowFFLogsItem))
         {
-            Configuration.ShowFFLogsItem = shouldConfigurationShowFFLogsItem;
-            Configuration.Save(_plugin);
+            Shared.Config.ShowFFLogsItem = shouldConfigurationShowFFLogsItem;
+            Shared.Config.Save();
         }
 
-        var shouldShowFFXIVCollectItem = Configuration.ShowFFXIVCollectItem;
+        var shouldShowFFXIVCollectItem = Shared.Config.ShowFFXIVCollectItem;
         if (ImGui.Checkbox("Show FFXIV Collect item?", ref shouldShowFFXIVCollectItem))
         {
-            Configuration.ShowFFXIVCollectItem = shouldShowFFXIVCollectItem;
-            Configuration.Save(_plugin);
+            Shared.Config.ShowFFXIVCollectItem = shouldShowFFXIVCollectItem;
+            Shared.Config.Save();
         }
 
-        var shouldShowLodestoneItem = Configuration.ShowLodestoneItem;
+        var shouldShowLodestoneItem = Shared.Config.ShowLodestoneItem;
         if (ImGui.Checkbox("Show Lodestone item?", ref shouldConfigurationShowFFLogsItem))
         {
-            Configuration.ShowLodestoneItem = shouldShowLodestoneItem;
-            Configuration.Save(_plugin);
+            Shared.Config.ShowLodestoneItem = shouldShowLodestoneItem;
+            Shared.Config.Save();
         }
     }
 }

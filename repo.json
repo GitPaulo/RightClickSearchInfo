@@ -1,10 +1,10 @@
 [
     {
         "Author": "GitPaulo",
-        "Name": "Right Click Search Info",
+        "Name": "RightClickSearchInfo",
         "Description": "Rich click a player and view their search info and more.",
         "InternalName": "RightClickSearchInfo",
-        "AssemblyVersion": "2.0.0",
+        "AssemblyVersion": "3.0.0",
         "RepoUrl": "https://github.com/GitPaulo/RightClickSearchInfo",
         "IconUrl": "https://raw.githubusercontent.com/GitPaulo/RightClickSearchInfo/master/Data/icon.png",
         "ApplicableVersion": "any",
@@ -19,8 +19,8 @@
         "DalamudApiLevel": 10,
         "IsHide": "False",
         "IsTestingExclusive": "False",
-        "DownloadLinkInstall": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/2.0.0/RightClickSearchInfo.zip",
-        "DownloadLinkTesting": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/2.0.0/RightClickSearchInfo.zip",
-        "DownloadLinkUpdate": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/2.0.0/RightClickSearchInfo.zip"
+        "DownloadLinkInstall": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/3.0.0/latest.zip",
+        "DownloadLinkTesting": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/3.0.0/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/3.0.0/latest.zip"
     }
 ]

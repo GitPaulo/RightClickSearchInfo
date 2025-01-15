@@ -7,9 +7,7 @@ namespace RightClickSearchInfo.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private readonly Plugin _plugin;
-
-    public MainWindow(Plugin plugin) : base(
+    public MainWindow() : base(
         "RCSI", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
@@ -17,8 +15,6 @@ public class MainWindow : Window, IDisposable
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
-
-        this._plugin = plugin;
     }
 
     public void Dispose()

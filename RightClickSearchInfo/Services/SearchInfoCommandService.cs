@@ -2,7 +2,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 
 namespace RightClickSearchInfo.Services;
 
-public class SearchInfoCommandService(Plugin plugin)
+public class SearchInfoCommandService()
 {
    public string CreateCommandString(IPlayerCharacter? target)
    { 

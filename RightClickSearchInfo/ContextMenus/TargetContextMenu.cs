@@ -1,43 +1,40 @@
 using System.Linq;
 using Dalamud.Game.Gui.ContextMenu;
-using RightClickSearchInfo.Utils;
+using RightClickSearchInfo.Util;
 
 namespace RightClickSearchInfo.ContextMenus
 {
     public class TargetContextMenu
     {
-        private Plugin _plugin;
-        private readonly MenuItem _searchMenuItem;
-        private readonly MenuItem _ffLogsMenuItem;
-        private readonly MenuItem _lodestoneMenuItem;
-        private readonly MenuItem _ffxivCollectMenuItem;
+        private readonly MenuItem searchMenuItem;
+        private readonly MenuItem ffLogsMenuItem;
+        private readonly MenuItem lodestoneMenuItem;
+        private readonly MenuItem ffxivCollectMenuItem;
 
-        private string? _targetFullName;
-        private uint _targetWorldId;
+        private string? targetFullName;
+        private uint targetWorldId;
 
-        public TargetContextMenu(Plugin plugin)
+        public TargetContextMenu()
         {
-            _plugin = plugin;
-
-            _searchMenuItem = new MenuItem
+            searchMenuItem = new MenuItem
             {
                 Name = "Search In Game",
                 OnClicked = OnOpenPlayerInfo,
                 PrefixChar = 'S'
             };
-            _ffLogsMenuItem = new MenuItem
+            ffLogsMenuItem = new MenuItem
             {
                 Name = "Search In FFLogs",
                 OnClicked = OnOpenFFLogs,
                 PrefixChar = 'S'
             };
-            _lodestoneMenuItem = new MenuItem
+            lodestoneMenuItem = new MenuItem
             {
                 Name = "Search In Lodestone",
                 OnClicked = OnOpenLodestone,
                 PrefixChar = 'S'
             };
-            _ffxivCollectMenuItem = new MenuItem
+            ffxivCollectMenuItem = new MenuItem
             {
                 Name = "Search In FFXIV Collect",
                 OnClicked = OnOpenFFXIVCollect,
@@ -47,15 +44,15 @@ namespace RightClickSearchInfo.ContextMenus
 
         public void Enable()
         {
-            _plugin.ContextMenu.OnMenuOpened += OnContextMenuOpened;
+            Shared.ContextMenu.OnMenuOpened += OnContextMenuOpened;
         }
 
         public void Disable()
         {
-            _plugin.ContextMenu.OnMenuOpened -= OnContextMenuOpened;
+            Shared.ContextMenu.OnMenuOpened -= OnContextMenuOpened;
         }
 
-        private static bool IsMenuValid(IMenuArgs menuOpenedArgs, Plugin plugin)
+        private static bool IsMenuValid(IMenuArgs menuOpenedArgs)
         {
             if (menuOpenedArgs.Target is not MenuTargetDefault menuTargetDefault)
             {
@@ -72,12 +69,13 @@ namespace RightClickSearchInfo.ContextMenus
                 case "SocialList":
                 case "ContactList":
                 case "ChatLog":
-                case "_PartyList":
+                case "PartyList":
                 case "LinkShell":
                 case "CrossWorldLinkshell":
                 case "ContentMemberList":
                 case "BeginnerChatList":
-                    return menuTargetDefault.TargetName != string.Empty && WorldUtils.IsWorldValid(menuTargetDefault.TargetHomeWorld.Id, plugin);
+                    return menuTargetDefault.TargetName != string.Empty &&
+                           WorldUtils.IsWorldValid(menuTargetDefault.TargetHomeWorld.RowId);
 
                 case "BlackList":
                 case "MuteList":
@@ -89,76 +87,80 @@ namespace RightClickSearchInfo.ContextMenus
 
         private void OnContextMenuOpened(IMenuOpenedArgs menuArgs)
         {
-            if (!IsMenuValid(menuArgs, _plugin) || menuArgs.Target is not MenuTargetDefault menuTargetDefault ||
-                !_plugin.PluginInterface.UiBuilder.ShouldModifyUi)
+            if (!IsMenuValid(menuArgs) || menuArgs.Target is not MenuTargetDefault menuTargetDefault ||
+                !Shared.PluginInterface.UiBuilder.ShouldModifyUi)
             {
                 return;
             }
 
-            _targetFullName = menuTargetDefault.TargetName;
-            _targetWorldId = menuTargetDefault.TargetHomeWorld.Id;
+            targetFullName = menuTargetDefault.TargetName;
+            targetWorldId = menuTargetDefault.TargetHomeWorld.RowId;
 
-            if (_plugin.Configuration.ShowSearchInfoItem) {
-                menuArgs.AddMenuItem(_searchMenuItem);
-            }
-
-            if (_plugin.Configuration.ShowLodestoneItem)
+            if (Shared.Config.ShowSearchInfoItem)
             {
-                menuArgs.AddMenuItem(_lodestoneMenuItem);
+                menuArgs.AddMenuItem(searchMenuItem);
             }
 
-            if (_plugin.Configuration.ShowFFXIVCollectItem)
+            if (Shared.Config.ShowLodestoneItem)
             {
-                menuArgs.AddMenuItem(_ffxivCollectMenuItem);
+                menuArgs.AddMenuItem(lodestoneMenuItem);
             }
 
-            // Check if FFLogs plugin is enabled
-            var isFFLogsEnabled = _plugin.PluginInterface.InstalledPlugins.Any(pluginInfo => pluginInfo.InternalName == "FFLogsViewer" && pluginInfo.IsLoaded) && _plugin.Configuration.ShowFFLogsItem;
+            if (Shared.Config.ShowFFXIVCollectItem)
+            {
+                menuArgs.AddMenuItem(ffxivCollectMenuItem);
+            }
+
+            // Check if FFLogs Shared is enabled
+            var isFFLogsEnabled =
+                Shared.PluginInterface.InstalledPlugins.Any(pluginInfo =>
+                                                                pluginInfo.InternalName == "FFLogsViewer" &&
+                                                                pluginInfo.IsLoaded) && Shared.Config.ShowFFLogsItem;
             if (!isFFLogsEnabled)
             {
-                menuArgs.AddMenuItem(_ffLogsMenuItem);
+                menuArgs.AddMenuItem(ffLogsMenuItem);
             }
         }
 
         private void OnOpenPlayerInfo(IMenuItemClickedArgs args)
         {
-            if (_targetFullName == null)
+            if (targetFullName == null)
             {
                 return;
             }
 
-            var searchCommand = _plugin.SearchInfoCommandService.CreateCommandString(_targetFullName);
-            _plugin.ChatAutomationService.SendMessage(searchCommand);
+            var searchCommand = Shared.SearchInfoCommandService.CreateCommandString(targetFullName);
+            _ = Shared.ChatAutomationService.SendMessage(searchCommand);
         }
 
         private void OnOpenFFLogs(IMenuItemClickedArgs args)
         {
-            if (_targetFullName == null)
+            if (targetFullName == null)
             {
                 return;
             }
 
-            _plugin.FFLogsService.OpenCharacterFFLogs(_targetFullName);
+            Shared.FFLogsService.OpenCharacterFFLogs(targetFullName);
         }
 
         private void OnOpenLodestone(IMenuItemClickedArgs args)
         {
-            if (_targetFullName == null)
+            if (targetFullName == null)
             {
                 return;
             }
 
-            _plugin.LodestoneService.OpenCharacterLodestone(_targetFullName, _targetWorldId);
+            Shared.LodestoneService.OpenCharacterLodestone(targetFullName, targetWorldId);
         }
 
         private void OnOpenFFXIVCollect(IMenuItemClickedArgs args)
         {
-            if (_targetFullName == null)
+            if (targetFullName == null)
             {
                 return;
             }
 
-            _plugin.FFXIVCollectService.OpenCharacterFFXIVCollect(_targetFullName, _targetWorldId);
+            Shared.FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, targetWorldId);
         }
     }
 }
