@@ -2,7 +2,7 @@
     {
         "Author": "GitPaulo",
         "Name": "RightClickSearchInfo",
-        "Description": "Rich click a player and view their search info and more.",
+        "Description": "Allows you to search a player in-game and on the web by right-clicking them.",
         "InternalName": "RightClickSearchInfo",
         "AssemblyVersion": "3.0.0",
         "RepoUrl": "https://github.com/GitPaulo/RightClickSearchInfo",
