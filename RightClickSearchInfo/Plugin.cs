@@ -19,6 +19,7 @@ namespace RightClickSearchInfo
         private const string LodestoneOverCommand = "/lodmo";
         private const string FFXIVCollectOverCommand = "/fcmo";
         private const string FFLogsOverCommand = "/fflmo";
+        private const string LalaAchievementsOverCommand = "/lalamo";
 
         private TargetContextMenu targetContextMenu;
         private readonly WindowSystem windowSystem = new(Name);
@@ -72,6 +73,10 @@ namespace RightClickSearchInfo
             Shared.CommandManager.AddHandler(FFLogsOverCommand, new CommandInfo(OnFFLogsOverCommand)
             {
                 HelpMessage = "FFLogs command for mouse over target."
+            });
+            Shared.CommandManager.AddHandler(LalaAchievementsOverCommand, new CommandInfo(OnLalaAchievementsOverCommand)
+            {
+                HelpMessage = "Lala Achievements command for mouse over target."
             });
         }
 
@@ -182,6 +187,19 @@ namespace RightClickSearchInfo
 
             var targetFullName = target.Name.ToString();
             Shared.FFLogsService.OpenCharacterFFLogs(targetFullName);
+        }
+        
+        private void OnLalaAchievementsOverCommand(string command, string args)
+        {
+            var target = Shared.TargetManager.MouseOverTarget as IPlayerCharacter;
+            if (target == null || target.ObjectKind != ObjectKind.Player)
+            {
+                return;
+            }
+
+            var targetFullName = target.Name.ToString();
+            var worldId = target.HomeWorld.RowId;
+            Shared.LalaAchievementsService.OpenCharacterLalaAchievements(targetFullName, worldId);
         }
 
         private void DrawUi()
