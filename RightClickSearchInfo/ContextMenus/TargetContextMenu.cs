@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Gui.ContextMenu;
 using RightClickSearchInfo.Util;
@@ -6,10 +7,12 @@ namespace RightClickSearchInfo.ContextMenus
 {
     public class TargetContextMenu
     {
+        private readonly MenuItem searchParentMenuItem;
         private readonly MenuItem searchMenuItem;
         private readonly MenuItem ffLogsMenuItem;
         private readonly MenuItem lodestoneMenuItem;
         private readonly MenuItem ffxivCollectMenuItem;
+        private readonly MenuItem lalachievmentsMenuItem;
 
         private string? targetFullName;
         private uint targetWorldId;
@@ -18,26 +21,41 @@ namespace RightClickSearchInfo.ContextMenus
         {
             searchMenuItem = new MenuItem
             {
-                Name = "Search In Game",
+                Name = "In Game",
                 OnClicked = OnOpenPlayerInfo,
                 PrefixChar = 'S'
             };
             ffLogsMenuItem = new MenuItem
             {
-                Name = "Search In FFLogs",
+                Name = "In FFLogs",
                 OnClicked = OnOpenFFLogs,
                 PrefixChar = 'S'
             };
             lodestoneMenuItem = new MenuItem
             {
-                Name = "Search In Lodestone",
+                Name = "In Lodestone",
                 OnClicked = OnOpenLodestone,
                 PrefixChar = 'S'
             };
             ffxivCollectMenuItem = new MenuItem
             {
-                Name = "Search In FFXIV Collect",
+                Name = "In FFXIV Collect",
                 OnClicked = OnOpenFFXIVCollect,
+                PrefixChar = 'S'
+            };
+            lalachievmentsMenuItem = new MenuItem
+            {
+                Name = "In Lala Achievements",
+                OnClicked = OnOpenLalaAchievements,
+                PrefixChar = 'S'
+            };
+
+            // Initialize the parent menu item
+            searchParentMenuItem = new MenuItem
+            {
+                Name = "Search",
+                IsSubmenu = true,
+                OnClicked = OpenSearchSubmenu, // Dynamically open submenu items
                 PrefixChar = 'S'
             };
         }
@@ -96,19 +114,33 @@ namespace RightClickSearchInfo.ContextMenus
             targetFullName = menuTargetDefault.TargetName;
             targetWorldId = menuTargetDefault.TargetHomeWorld.RowId;
 
+            // Add the parent "Search" menu item
+            menuArgs.AddMenuItem(searchParentMenuItem);
+        }
+
+        private void OpenSearchSubmenu(IMenuItemClickedArgs args)
+        {
+            // Create the submenu items dynamically
+            var submenuItems = new List<MenuItem>();
+
             if (Shared.Config.ShowSearchInfoItem)
             {
-                menuArgs.AddMenuItem(searchMenuItem);
+                submenuItems.Add(searchMenuItem);
             }
 
             if (Shared.Config.ShowLodestoneItem)
             {
-                menuArgs.AddMenuItem(lodestoneMenuItem);
+                submenuItems.Add(lodestoneMenuItem);
             }
 
             if (Shared.Config.ShowFFXIVCollectItem)
             {
-                menuArgs.AddMenuItem(ffxivCollectMenuItem);
+                submenuItems.Add(ffxivCollectMenuItem);
+            }
+            
+            if (Shared.Config.ShowLalaAchievementsItem)
+            {
+                submenuItems.Add(lalachievmentsMenuItem);
             }
 
             // Check if FFLogs Shared is enabled
@@ -116,10 +148,13 @@ namespace RightClickSearchInfo.ContextMenus
                 Shared.PluginInterface.InstalledPlugins.Any(pluginInfo =>
                                                                 pluginInfo.InternalName == "FFLogsViewer" &&
                                                                 pluginInfo.IsLoaded) && Shared.Config.ShowFFLogsItem;
+
             if (!isFFLogsEnabled)
             {
-                menuArgs.AddMenuItem(ffLogsMenuItem);
+                submenuItems.Add(ffLogsMenuItem);
             }
+
+            args.OpenSubmenu("Search", submenuItems);
         }
 
         private void OnOpenPlayerInfo(IMenuItemClickedArgs args)
@@ -161,6 +196,16 @@ namespace RightClickSearchInfo.ContextMenus
             }
 
             Shared.FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, targetWorldId);
+        }
+        
+        private void OnOpenLalaAchievements(IMenuItemClickedArgs args)
+        {
+            if (targetFullName == null)
+            {
+                return;
+            }
+
+            Shared.LalaAchievementsService.OpenCharacterLalaAchievements(targetFullName, targetWorldId);
         }
     }
 }

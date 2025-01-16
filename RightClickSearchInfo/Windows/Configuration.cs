@@ -12,6 +12,7 @@ public class Configuration : IPluginConfiguration
     public bool ShowFFXIVCollectItem { get; set; } = true;
     public bool ShowSearchInfoItem { get; set; } = true;
     public bool ShowFFLogsItem { get; set; } = true;
+    public bool ShowLalaAchievementsItem { get; set; } = true;
 
     // the below exist just to make saving less cumbersome
     public void Save()

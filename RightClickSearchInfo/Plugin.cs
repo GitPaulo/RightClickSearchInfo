@@ -82,6 +82,7 @@ namespace RightClickSearchInfo
             Shared.SearchInfoCommandService = new SearchInfoCommandService();
             Shared.FFXIVCollectService = new FFXIVCollectService();
             Shared.FFLogsService = new FFLogsService();
+            Shared.LalaAchievementsService = new LalaAchievementsService();
         }
 
         private void InitResources()

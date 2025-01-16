@@ -48,5 +48,12 @@ public class ConfigWindow : Window, IDisposable
             Shared.Config.ShowLodestoneItem = shouldShowLodestoneItem;
             Shared.Config.Save();
         }
+        
+        var shouldShowLalaAchievementsItem = Shared.Config.ShowLalaAchievementsItem;
+        if (ImGui.Checkbox("Show Lala Achievements item?", ref shouldShowLalaAchievementsItem))
+        {
+            Shared.Config.ShowLalaAchievementsItem = shouldShowLalaAchievementsItem;
+            Shared.Config.Save();
+        }
     }
 }

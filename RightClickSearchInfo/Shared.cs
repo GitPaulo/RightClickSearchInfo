@@ -18,6 +18,7 @@ internal class Shared
     public static SearchInfoCommandService SearchInfoCommandService { get; set; } = null!;
     public static FFXIVCollectService FFXIVCollectService { get; set; } = null!;
     public static FFLogsService FFLogsService { get; set; } = null!;
+    public static LalaAchievementsService LalaAchievementsService { get; set; } = null!;
     public static SoundEngine SoundEngine { get; set; } = null!;
     public static string SoundNotificationPath { get; set; } = null!;
     
