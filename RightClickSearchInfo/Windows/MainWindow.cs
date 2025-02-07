@@ -25,6 +25,7 @@ public class MainWindow : Window, IDisposable
     public override void Draw()
     {
         ImGui.Text("You should right click someone to like search info.");
+        ImGui.Text("IDK what you expected to be here?");
         ImGui.Spacing();
     }
 }

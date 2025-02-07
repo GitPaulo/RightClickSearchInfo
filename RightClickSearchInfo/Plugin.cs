@@ -113,6 +113,7 @@ namespace RightClickSearchInfo
         {
             Shared.PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
             Shared.PluginInterface.UiBuilder.Draw += DrawUi;
+            Shared.PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
         }
 
         public void Dispose()
@@ -126,12 +127,20 @@ namespace RightClickSearchInfo
             Shared.CommandManager.RemoveHandler(FFLogsOverCommand);
 
             Shared.PluginInterface.UiBuilder.Draw -= DrawUi;
+            Shared.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUI;
+            Shared.PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUI;
+            
             targetContextMenu.Disable();
         }
 
         public void ToggleConfigUI()
         {
             Shared.ConfigWindow.Toggle();
+        }
+        
+        public void ToggleMainUI()
+        {
+            Shared.MainWindow.Toggle();
         }
 
         private void OnMainCommand(string command, string args)

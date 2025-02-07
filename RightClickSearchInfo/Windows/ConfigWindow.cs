@@ -7,12 +7,12 @@ namespace RightClickSearchInfo.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    public ConfigWindow() : base("RightClickSearchInfo###With a constant ID")
+    public ConfigWindow() : base("RightClickSearchInfo Configuration###With a constant ID")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(232, 200);
+        Size = new Vector2(260, 180);
         SizeCondition = ImGuiCond.Always;
     }
 
