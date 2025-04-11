@@ -7,7 +7,7 @@ Adds context menu items for character search quick-access on various xiv tools.
   <img src="https://github.com/user-attachments/assets/834b8fc1-4781-42ec-81fd-60291b6657e2" width="45%" />
 </p>
 
-in addition, you can set you're own items through a simple value replacement feature
+in addition, you can set your own items through a simple value replacement feature:
 
 ![image](https://github.com/user-attachments/assets/91931d91-3de7-4d24-a12b-ebdcef7f9b19)
 
