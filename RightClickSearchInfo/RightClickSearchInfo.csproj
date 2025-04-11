@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="Dalamud.Plugin.Bootstrap.targets"/>
-
+<Project Sdk="Dalamud.NET.Sdk/12.0.2">
     <PropertyGroup>
-        <TargetFramework>net8.0-windows</TargetFramework>
-        <LangVersion>12.0</LangVersion>
-        <EnablePreviewFeatures>true</EnablePreviewFeatures>
-        <Authors>GitPaulo</Authors>
+        <TargetFramework>net9.0-windows</TargetFramework>
         <Version>2.0.0</Version>
         <Description>A dead simple plugin to right click search info.</Description>
+        <Authors>GitPaulo</Authors>
         <IsPackable>false</IsPackable>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/GitPaulo/RightClickSearchInfo</PackageProjectUrl>
-        <RootNamespace>RightClickSearchInfo</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,42 +17,12 @@
         </Content>
     </ItemGroup>
 
-    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
-        <DalamudLibPath>$(DALAMUD_HOME)/</DalamudLibPath>
-    </PropertyGroup>
-    <ItemGroup>
-        <Reference Include="Dalamud">
-            <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="FFXIVClientStructs">
-            <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="ImGui.NET">
-            <HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="ImGuiScene">
-            <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="Lumina">
-            <HintPath>$(DalamudLibPath)Lumina.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <Reference Include="Lumina">
-            <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Include="InputSimulatorPlus" Version="1.0.7"/>
-        <PackageReference Include="NAudio" Version="2.1.0"/>
+        <PackageReference Include="NAudio" Version="2.2.1"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="NetStone" Version="1.3.1" />
+        <PackageReference Include="NetStone" Version="1.4.1" />
     </ItemGroup>
 </Project>

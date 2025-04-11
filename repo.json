@@ -16,7 +16,7 @@
             "GitPaulo",
             "artin"
         ],
-        "DalamudApiLevel": 11,
+        "DalamudApiLevel": 12,
         "IsHide": "False",
         "IsTestingExclusive": "False",
         "DownloadLinkInstall": "https://github.com/GitPaulo/RightClickSearchInfo/releases/download/3.0.0/latest.zip",

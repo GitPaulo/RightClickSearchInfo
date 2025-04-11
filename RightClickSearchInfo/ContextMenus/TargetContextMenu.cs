@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.Gui.ContextMenu;
 using RightClickSearchInfo.Util;
+using RightClickSearchInfo.Windows;
 
 namespace RightClickSearchInfo.ContextMenus
 {
@@ -103,6 +105,20 @@ namespace RightClickSearchInfo.ContextMenus
             return false;
         }
 
+        private void OpenCustomSearch(CustomSearchProvider provider)
+        {
+            if (targetFullName == null)
+                return;
+
+            var world = WorldUtils.WorldIdToName(targetWorldId);
+            var url = provider.UrlTemplate
+                              .Replace("$1", Uri.EscapeDataString(targetFullName))
+                              .Replace("$2", Uri.EscapeDataString(world));
+
+            Dalamud.Utility.Util.OpenLink(url);
+            Shared.SoundEngine.PlaySound(Shared.SoundNotificationPath);
+        }
+
         private void OnContextMenuOpened(IMenuOpenedArgs menuArgs)
         {
             if (!IsMenuValid(menuArgs) || menuArgs.Target is not MenuTargetDefault menuTargetDefault ||
@@ -137,7 +153,7 @@ namespace RightClickSearchInfo.ContextMenus
             {
                 submenuItems.Add(ffxivCollectMenuItem);
             }
-            
+
             if (Shared.Config.ShowLalaAchievementsItem)
             {
                 submenuItems.Add(lalachievmentsMenuItem);
@@ -148,10 +164,21 @@ namespace RightClickSearchInfo.ContextMenus
                 Shared.PluginInterface.InstalledPlugins.Any(pluginInfo =>
                                                                 pluginInfo.InternalName == "FFLogsViewer" &&
                                                                 pluginInfo.IsLoaded) && Shared.Config.ShowFFLogsItem;
-
             if (!isFFLogsEnabled)
             {
                 submenuItems.Add(ffLogsMenuItem);
+            }
+
+            // Add user-defined search providers
+            foreach (var provider in Shared.Config.CustomSearchProviders)
+            {
+                var dynamicMenuItem = new MenuItem
+                {
+                    Name = provider.Label,
+                    PrefixChar = 'S',
+                    OnClicked = _ => OpenCustomSearch(provider)
+                };
+                submenuItems.Add(dynamicMenuItem);
             }
 
             args.OpenSubmenu("Search", submenuItems);
@@ -197,7 +224,7 @@ namespace RightClickSearchInfo.ContextMenus
 
             Shared.FFXIVCollectService.OpenCharacterFFXIVCollect(targetFullName, targetWorldId);
         }
-        
+
         private void OnOpenLalaAchievements(IMenuItemClickedArgs args)
         {
             if (targetFullName == null)

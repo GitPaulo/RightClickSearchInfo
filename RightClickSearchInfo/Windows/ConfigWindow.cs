@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 
@@ -9,10 +10,9 @@ public class ConfigWindow : Window, IDisposable
 {
     public ConfigWindow() : base("RightClickSearchInfo Configuration###With a constant ID")
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-                ImGuiWindowFlags.NoScrollWithMouse;
+        Flags = ImGuiWindowFlags.NoCollapse;
 
-        Size = new Vector2(260, 180);
+        Size = new Vector2(600, 300);
         SizeCondition = ImGuiCond.Always;
     }
 
@@ -27,7 +27,8 @@ public class ConfigWindow : Window, IDisposable
             Shared.Config.ShowSearchInfoItem = shouldConfigurationShowSearchInfoItem;
             Shared.Config.Save();
         }
-        {}
+
+        { }
         var shouldConfigurationShowFFLogsItem = Shared.Config.ShowFFLogsItem;
         if (ImGui.Checkbox("Show FFlogs item?", ref shouldConfigurationShowFFLogsItem))
         {
@@ -48,11 +49,74 @@ public class ConfigWindow : Window, IDisposable
             Shared.Config.ShowLodestoneItem = shouldShowLodestoneItem;
             Shared.Config.Save();
         }
-        
+
         var shouldShowLalaAchievementsItem = Shared.Config.ShowLalaAchievementsItem;
         if (ImGui.Checkbox("Show Lala Achievements item?", ref shouldShowLalaAchievementsItem))
         {
             Shared.Config.ShowLalaAchievementsItem = shouldShowLalaAchievementsItem;
+            Shared.Config.Save();
+        }
+
+        // Custom Searches
+        ImGui.Separator();
+        ImGui.Text("Custom Search Items");
+        ImGui.Text("(For template URLs, use $1, $2, ... as a placeholder for query parameter values.)");
+        ImGui.Text("(e.g. https://example.com/search?name=$1&world=$2)");
+        if (ImGui.BeginTable("##CustomSearchTable", 3,
+                             ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp))
+        {
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthStretch, 0.2f);
+            ImGui.TableSetupColumn("URL Template", ImGuiTableColumnFlags.WidthStretch, 0.7f);
+            ImGui.TableSetupColumn("Delete", ImGuiTableColumnFlags.WidthFixed, 60f);
+            ImGui.TableHeadersRow();
+
+            int indexToRemove = -1;
+            for (int i = 0; i < Shared.Config.CustomSearchProviders.Count; i++)
+            {
+                var provider = Shared.Config.CustomSearchProviders[i];
+                ImGui.TableNextRow();
+
+                // Label column
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushID($"label_{i}");
+                ImGui.PushItemWidth(-1); // fill cell
+                ImGui.InputText("", ref provider.Label, 100);
+                ImGui.PopItemWidth();
+                ImGui.PopID();
+
+                // URL Template column
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushID($"url_{i}");
+                ImGui.PushItemWidth(-1); // fill cell
+                ImGui.InputText("", ref provider.UrlTemplate, 300);
+                ImGui.PopItemWidth();
+                ImGui.PopID();
+
+                // Delete button column
+                ImGui.TableSetColumnIndex(2);
+                ImGui.PushID($"remove_{i}");
+                ImGui.PushFont(UiBuilder.IconFont);
+                if (ImGui.SmallButton(FontAwesomeIcon.Trash.ToIconString()))
+                {
+                    indexToRemove = i;
+                }
+
+                ImGui.PopFont();
+                ImGui.PopID();
+            }
+
+            if (indexToRemove != -1)
+            {
+                Shared.Config.CustomSearchProviders.RemoveAt(indexToRemove);
+                Shared.Config.Save();
+            }
+
+            ImGui.EndTable();
+        }
+
+        if (ImGui.Button("+ Add Search Item"))
+        {
+            Shared.Config.CustomSearchProviders.Add(new CustomSearchProvider());
             Shared.Config.Save();
         }
     }
