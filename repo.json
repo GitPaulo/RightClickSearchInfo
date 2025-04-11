@@ -4,7 +4,7 @@
         "Name": "RightClickSearchInfo",
         "Description": "Allows you to search a player in-game and on the web by right-clicking them.",
         "InternalName": "RightClickSearchInfo",
-        "AssemblyVersion": "3.0.0",
+        "AssemblyVersion": "4.0.0",
         "RepoUrl": "https://github.com/GitPaulo/RightClickSearchInfo",
         "IconUrl": "https://raw.githubusercontent.com/GitPaulo/RightClickSearchInfo/master/Data/icon.png",
         "ApplicableVersion": "any",
