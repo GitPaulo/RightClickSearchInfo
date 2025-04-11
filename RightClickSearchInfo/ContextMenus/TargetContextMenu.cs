@@ -23,31 +23,31 @@ namespace RightClickSearchInfo.ContextMenus
         {
             searchMenuItem = new MenuItem
             {
-                Name = "In Game",
+                Name = "in Game",
                 OnClicked = OnOpenPlayerInfo,
                 PrefixChar = 'S'
             };
             ffLogsMenuItem = new MenuItem
             {
-                Name = "In FFLogs",
+                Name = "in FFLogs",
                 OnClicked = OnOpenFFLogs,
                 PrefixChar = 'S'
             };
             lodestoneMenuItem = new MenuItem
             {
-                Name = "In Lodestone",
+                Name = "in Lodestone",
                 OnClicked = OnOpenLodestone,
                 PrefixChar = 'S'
             };
             ffxivCollectMenuItem = new MenuItem
             {
-                Name = "In FFXIV Collect",
+                Name = "in FFXIV Collect",
                 OnClicked = OnOpenFFXIVCollect,
                 PrefixChar = 'S'
             };
             lalachievmentsMenuItem = new MenuItem
             {
-                Name = "In Lala Achievements",
+                Name = "in LalaAchievements",
                 OnClicked = OnOpenLalaAchievements,
                 PrefixChar = 'S'
             };
@@ -111,13 +111,27 @@ namespace RightClickSearchInfo.ContextMenus
                 return;
 
             var world = WorldUtils.WorldIdToName(targetWorldId);
-            var url = provider.UrlTemplate
-                              .Replace("$1", Uri.EscapeDataString(targetFullName))
-                              .Replace("$2", Uri.EscapeDataString(world));
+            var encodedName = Uri.EscapeDataString(targetFullName);
+            var encodedWorld = Uri.EscapeDataString(world);
 
+            // Split name
+            var nameParts = targetFullName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            var firstName = nameParts.Length > 0 ? nameParts[0] : "";
+            var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+    
+            var lodestoneId = Shared.LodestoneService.GetLodestoneId(targetFullName, world) ?? "unknown";
+
+            var url = provider.UrlTemplate
+                              .Replace("$1", encodedName)
+                              .Replace("$2", encodedWorld)
+                              .Replace("$3", Uri.EscapeDataString(lodestoneId))
+                              .Replace("$first", Uri.EscapeDataString(firstName))
+                              .Replace("$last", Uri.EscapeDataString(lastName));
+            
             Dalamud.Utility.Util.OpenLink(url);
             Shared.SoundEngine.PlaySound(Shared.SoundNotificationPath);
         }
+
 
         private void OnContextMenuOpened(IMenuOpenedArgs menuArgs)
         {

@@ -62,6 +62,21 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Text("Custom Search Items");
         ImGui.Text("(For template URLs, use $1, $2, ... as a placeholder for query parameter values.)");
         ImGui.Text("(e.g. https://example.com/search?name=$1&world=$2)");
+        ImGui.SameLine();
+        ImGui.TextDisabled("(?)");
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.BeginTooltip();
+            ImGui.TextUnformatted("URL Placeholders:");
+            ImGui.Separator();
+            ImGui.TextUnformatted("$1 → Character full name");
+            ImGui.TextUnformatted("$2 → World name");
+            ImGui.TextUnformatted("$3 → Lodestone ID");
+            ImGui.TextUnformatted("$first → First name");
+            ImGui.TextUnformatted("$last → Last name");
+            ImGui.EndTooltip();
+        }
+
         if (ImGui.BeginTable("##CustomSearchTable", 3,
                              ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingStretchProp))
         {

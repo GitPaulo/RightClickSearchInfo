@@ -8,12 +8,11 @@ namespace RightClickSearchInfo.Windows;
 public class MainWindow : Window, IDisposable
 {
     public MainWindow() : base(
-        "RCSI", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+        "RightClickSearchInfo", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(375, 330),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+            MinimumSize = new Vector2(360, 160),
         };
     }
 
@@ -25,7 +24,7 @@ public class MainWindow : Window, IDisposable
     public override void Draw()
     {
         ImGui.Text("You should right click someone to like search info.");
-        ImGui.Text("IDK what you expected to be here?");
+        ImGui.Text("Config menu will help you <3");
         ImGui.Spacing();
     }
 }
